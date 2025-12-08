@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PTI EXPERT LONGUE DURÉE</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Markdown Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- SheetJS (Pour lire les fichiers Excel) -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; }
+        h1, h2, h3 { font-family: 'Roboto', sans-serif; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+
+        /* Card Hover */
+        .directive-item:hover { background-color: #f0f9ff; border-left: 3px solid #0ea5e9; }
+        .directive-item { transition: all 0.1s ease; border-left: 3px solid transparent; }
+        
+        /* PTI Table Styling */
+        .pti-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 10px; }
+        .pti-table th { background-color: #e2e8f0; padding: 10px; text-align: left; font-weight: bold; border: 2px solid #94a3b8; text-transform: uppercase; }
+        .pti-table td { padding: 10px; border: 1px solid #cbd5e1; vertical-align: top; }
+        
+        /* FIX IMPORTANT : On cache la zone d'impression sur l'écran */
+        #print-area { display: none; }
+
+        /* PRINT STYLES - ROBUST FIX */
+        @media print {
+            body > * { display: none !important; } /* Cache tout le body */
+            
+            #print-area { 
+                display: block !important; /* Affiche SEULEMENT la zone d'impression */
+                position: absolute; 
+                top: 0; 
+                left: 0; 
+                width: 100%; 
+                height: auto; 
+                z-index: 9999; 
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            #print-area * { visibility: visible !important; }
+            .role-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 1px solid #ccc; }
+            table, tr, td, th { page-break-inside: avoid; }
+            @page { margin: 1.5cm; size: portrait; }
+        }
+
+        .role-badge {
+            font-size: 0.60rem; padding: 2px 5px; border-radius: 4px; font-weight: 800; text-transform: uppercase; margin-right: 6px; display: inline-block; min-width: 35px; text-align: center;
+        }
+        /* Role Colors */
+        .role-pab { background-color: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; } 
+        .role-aux { background-color: #fce7f3; color: #831843; border: 1px solid #f9a8d4; }
+        .role-inf { background-color: #dcfce7; color: #14532d; border: 1px solid #86efac; }
+        .role-all { background-color: #f1f5f9; color: #334151; border: 1px solid #cbd5e1; }
+
+        .typing-dot {
+            animation: typing 1.4s infinite ease-in-out both;
+            width: 6px; height: 6px; background-color: #475569; border-radius: 50%; display: inline-block; margin: 0 2px;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        .active-tab { border-bottom: 2px solid #0d9488; color: #0f766e; font-weight: bold; background: #f0fdfa; }
+        .inactive-tab { color: #64748b; background: #f8fafc; }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden bg-slate-50">
+
+    <!-- Header -->
+    <header class="bg-slate-800 text-white h-14 flex items-center justify-between px-4 shadow-lg z-20 flex-none">
+        <div class="flex items-center gap-3">
+            <div class="bg-teal-600 p-1.5 rounded"><i class="fa-solid fa-notes-medical text-white text-lg"></i></div>
+            <div>
+                <h1 class="text-base font-bold leading-tight">PTI EXPERT <span class="text-teal-400">LONGUE DURÉE</span></h1>
+                <p class="text-[10px] text-slate-400">Assistant Clinique - Mode Excel</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="openAIModal('coach')" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded font-bold transition-colors flex items-center gap-2 border border-indigo-400 shadow-sm">
+                <i class="fa-solid fa-user-doctor"></i> Coach Clinique
+            </button>
+            <button onclick="toggleSidebar()" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded font-bold transition-colors flex items-center gap-2 border border-slate-500 shadow-sm relative">
+                <i class="fa-solid fa-clipboard-list"></i>
+                <span>Panier PTI</span>
+                <span id="pti-badge" class="absolute -top-1 -right-1 bg-red-500 text-white px-1.5 h-4 flex items-center justify-center rounded-full text-[9px] hidden shadow-sm border border-white">0</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        
+        <!-- Left: Library (Scrollable) -->
+        <main class="flex-1 overflow-y-auto p-4 bg-slate-100" id="main-library">
+            
+            <!-- Excel Loader Status -->
+            <div id="db-status" class="mb-4 text-xs font-bold text-slate-500 flex items-center justify-end">
+                <span class="inline-block w-2 h-2 rounded-full bg-yellow-400 mr-2 animate-pulse" id="status-dot"></span>
+                <span id="status-text">Initialisation...</span>
+            </div>
+
+            <!-- Filters -->
+            <div class="bg-white p-3 rounded-lg shadow-sm border border-slate-200 mb-4 sticky top-0 z-10 flex flex-wrap gap-2 items-center">
+                <span class="text-[10px] uppercase font-bold text-slate-400 mr-2"><i class="fa-solid fa-filter mr-1"></i>Catégories:</span>
+                <button class="filter-btn active bg-slate-800 text-white text-xs px-3 py-1.5 rounded font-bold transition-colors" onclick="filterLib('all', this)">Tout</button>
+                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('scpd', this)">SCPD & Neuro</button>
+                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('soins', this)">Soins Physiques</button>
+                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('clinique', this)">Médical</button>
+                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('hdevie', this)">Habitudes de Vie</button>
+                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('infection', this)">Infections</button>
+                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('palliatif', this)">Palliatif</button>
+            </div>
+
+            <!-- Library Grid -->
+            <div id="library-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-12">
+                <!-- Cards injected via JS -->
+            </div>
+        </main>
+
+        <!-- Right: PTI Sidebar (Overlay/Slide-in) -->
+        <aside id="pti-sidebar" class="fixed inset-y-0 right-0 w-full md:w-[700px] bg-white shadow-2xl z-40 transform translate-x-full transition-transform duration-300 flex flex-col border-l border-slate-200">
+            
+            <!-- Sidebar Header -->
+            <div class="p-4 bg-slate-800 text-white flex justify-between items-center shadow-md flex-none">
+                <div>
+                    <h3 class="font-bold text-sm uppercase"><i class="fa-solid fa-file-signature mr-2"></i> Prévisualisation PTI</h3>
+                    <p class="text-[10px] text-slate-300">Format officiel (OIIQ/MSSS) + Plan de Travail</p>
+                </div>
+                <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <!-- PTI Content (Scrollable) -->
+            <div class="flex-1 overflow-y-auto p-6 bg-white" id="pti-content">
+                <div id="empty-state" class="flex flex-col items-center justify-center h-full text-slate-300">
+                    <i class="fa-solid fa-folder-plus text-6xl mb-4 text-slate-200"></i>
+                    <p class="text-sm font-bold">Panier vide</p>
+                    <p class="text-xs mt-1">Sélectionnez des directives dans la banque.</p>
+                </div>
+                
+                <!-- The Visual PTI Table -->
+                <div id="pti-visual-table" class="hidden">
+                    <div class="border-b-2 border-slate-800 mb-4 pb-2 flex justify-between items-end">
+                        <h2 class="font-bold text-xl text-slate-800 tracking-tight">PLAN THÉRAPEUTIQUE</h2>
+                        <span class="text-xs text-slate-500 uppercase font-bold tracking-wider">Document Légal</span>
+                    </div>
+                    <table class="pti-table shadow-sm">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%;">CONSTATS (PQRSTU)</th>
+                                <th style="width: 70%;">DIRECTIVES INFIRMIÈRES & SURVEILLANCE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pti-table-body">
+                            <!-- Rows generated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Action Footer -->
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex-none space-y-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                
+                <!-- AI Generation (PTI BASED) -->
+                <button onclick="generatePTINote()" class="w-full bg-teal-700 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded shadow-sm text-sm flex justify-center items-center gap-2 group transition-all">
+                    <i class="fa-solid fa-wand-magic-sparkles text-yellow-300 group-hover:rotate-12 transition-transform"></i> 
+                    Générer Note Évolution (Basée sur PTI)
+                </button>
+
+                <!-- Print Buttons Row -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="printView('pti')" class="bg-slate-800 hover:bg-slate-700 text-white py-2.5 px-3 rounded text-xs font-bold flex justify-center items-center gap-2 shadow transition-colors">
+                        <i class="fa-solid fa-print"></i> Imprimer PTI (Légal)
+                    </button>
+                    <button onclick="printView('plan')" class="bg-white hover:bg-slate-100 text-slate-800 py-2.5 px-3 rounded text-xs font-bold flex justify-center items-center gap-2 border border-slate-300 shadow-sm transition-colors">
+                        <i class="fa-solid fa-users-gear text-blue-600"></i> Imprimer Plan de Travail
+                    </button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Overlay -->
+    <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden backdrop-blur-sm transition-opacity"></div>
+
+    <!-- AI Modal -->
+    <div id="ai-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeAIModal()"></div>
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col relative z-10 overflow-hidden transform transition-all">
+            
+            <!-- Modal Header -->
+            <div class="flex border-b border-slate-200 bg-slate-50">
+                <button id="tab-coach" class="flex-1 py-3 text-sm font-medium transition-colors active-tab" onclick="switchTab('coach')">
+                    <i class="fa-solid fa-user-doctor mr-2"></i>Coach Clinique
+                </button>
+                <button id="tab-manual" class="flex-1 py-3 text-sm font-medium transition-colors inactive-tab" onclick="switchTab('manual')">
+                    <i class="fa-solid fa-pen-fancy mr-2"></i>Rédacteur Note
+                </button>
+                <button onclick="closeAIModal()" class="px-5 text-slate-400 hover:text-slate-600 border-l border-slate-200 hover:bg-slate-100 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <!-- MANUAL INPUT (Visible only in Manual tab) -->
+            <div id="manual-input-section" class="hidden p-4 bg-slate-50 border-b border-slate-200">
+                <p class="text-xs text-slate-500 mb-2 font-bold uppercase"><i class="fa-solid fa-keyboard mr-1"></i> Décrivez la situation à résumer :</p>
+                <textarea id="manual-text" class="w-full border border-slate-300 rounded p-3 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 mb-3" rows="3" placeholder="Ex: Résident a chuté dans sa chambre à 14h00. Pas de blessure apparente. Signes vitaux normaux. Famille avisée..."></textarea>
+                <button onclick="generateManualNote()" class="w-full bg-teal-600 text-white font-bold py-2 rounded shadow-sm hover:bg-teal-700 transition-colors flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-pen-nib"></i> Rédiger la note concise
+                </button>
+            </div>
+
+            <!-- Content Output -->
+            <div id="ai-output" class="flex-1 overflow-y-auto p-6 text-sm text-slate-800 leading-relaxed bg-white font-medium"></div>
+            
+            <!-- Input (Coach Chat) -->
+            <div id="ai-input-container" class="hidden p-4 border-t border-slate-200 bg-slate-50 flex gap-2">
+                <input type="text" id="ai-input" class="flex-1 border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm" placeholder="Question clinique...">
+                <button onclick="sendChat()" class="bg-indigo-600 text-white px-5 rounded-lg hover:bg-indigo-700 shadow-md"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+            
+            <!-- Footer (Copy) -->
+            <div id="ai-note-footer" class="hidden p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 items-center">
+                <span class="text-xs text-slate-500 mr-auto italic flex items-center"><i class="fa-solid fa-circle-info mr-1 text-blue-400"></i> Vérifier le contenu avant signature.</span>
+                <button onclick="copyNote()" class="bg-slate-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-800 shadow-md flex items-center gap-2"><i class="fa-regular fa-copy"></i>Copier le texte</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Print Area -->
+    <div id="print-area"></div>
+
+    <!-- LOGIQUE DE L'APPLICATION -->
+    <script>
+        const YOUR_HARDCODED_KEY = "AIzaSyBwW2cqKeSIxTREdZlAjo7o4J25NboztdI"; 
+
+        // Gestion automatique de la clé
+        function getApiKey() {
+            if (YOUR_HARDCODED_KEY && YOUR_HARDCODED_KEY.length > 10) return YOUR_HARDCODED_KEY;
+            let storedKey = localStorage.getItem('gemini_api_key');
+            if (storedKey) return storedKey;
+            const key = prompt("Pour utiliser l'IA, entrez votre clé API Google Gemini :");
+            if (key) {
+                localStorage.setItem('gemini_api_key', key.trim());
+                return key.trim();
+            }
+            return "";
+        }
+
+        // --- FALLBACK DATA (Pour quand le fichier Excel est introuvable) ---
+        const fallbackDatabase = [
+            {
+                id: 'scpd_resist', cat: 'scpd', title: 'Résistance aux Soins / Hygiène',
+                constats: ["Ferme la bouche", "Pousse/Frappe", "Rigidité musculaire"],
+                directives: [
+                    { role: 'PAB', text: "Utiliser la technique du leurre (objet dans la main) pour occuper les mains durant le soin." },
+                    { role: 'PAB', text: "Respecter le refus (STOP) et réessayer 15 min plus tard (GO)." },
+                    { role: 'INF', text: "Administrer l'analgésie 45 min avant les soins d'hygiène si douleur suspectée." }
+                ]
+            },
+            {
+                id: 'phy_chute', cat: 'soins', title: 'Risque de Chute Élevé',
+                constats: ["Marche instable", "Antécédent de chute", "Impulsivité"],
+                directives: [
+                    { role: 'PAB', text: "S'assurer que le résident porte des chaussures antidérapantes bien ajustées." },
+                    { role: 'PAB', text: "Laisser la cloche d'appel à portée de main." },
+                    { role: 'AUX', text: "Vérifier le bon fonctionnement de l'alarme de lit." }
+                ]
+            },
+            // ... (J'ai mis un set réduit pour le fallback pour ne pas surcharger le code, mais suffisant pour tester) ...
+             {
+                id: 'clin_douleur', cat: 'clinique', title: 'Douleur Chronique',
+                constats: ["Grimace", "Plaintes"],
+                directives: [
+                    { role: 'INF', text: "Évaluer douleur (PQRST/PACSLAC) à chaque quart." },
+                    { role: 'PAB', text: "Appliquer chaleur (sac magique tiède) PRN sur zone douloureuse." }
+                ]
+            }
+        ];
+
+        // --- EXCEL LOADING LOGIC ---
+        let database = []; // Will be populated from Excel or Fallback
+        let currentPTI = {};
+        let currentTab = 'coach';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDatabase();
+        });
+
+        async function loadDatabase() {
+            const statusText = document.getElementById('status-text');
+            const statusDot = document.getElementById('status-dot');
+            
+            try {
+                // Try to fetch the Excel file
+                const response = await fetch('banque_pti.xlsx');
+                
+                if (!response.ok) {
+                    throw new Error("Fichier non trouvé");
+                }
+
+                const arrayBuffer = await response.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const rawData = XLSX.utils.sheet_to_json(worksheet);
+                
+                const tempMap = {};
+                
+                rawData.forEach(row => {
+                    if(!row['ID_UNIQUE'] || !row['DIRECTIVE']) return;
+                    const id = row['ID_UNIQUE'];
+                    if(!tempMap[id]) {
+                        tempMap[id] = {
+                            id: id,
+                            cat: row['CATEGORIE'] || 'divers',
+                            title: row['TITRE'] || 'Titre inconnu',
+                            constats: row['CONSTATS'] ? row['CONSTATS'].split(',').map(s => s.trim()) : [],
+                            directives: []
+                        };
+                    }
+                    tempMap[id].directives.push({
+                        role: row['ROLE'] || 'ALL',
+                        text: row['DIRECTIVE']
+                    });
+                });
+
+                database = Object.values(tempMap);
+                
+                // Success UI
+                statusDot.classList.remove('bg-yellow-400', 'animate-pulse');
+                statusDot.classList.add('bg-green-500');
+                statusText.innerText = "Base de données Excel chargée.";
+                statusText.classList.add('text-green-600');
+                
+                renderLibrary('all');
+
+            } catch (error) {
+                console.log("Mode Fallback activé:", error);
+                
+                // FALLBACK MODE
+                database = fallbackDatabase; // Load the JS backup
+                
+                // Update UI to warn user
+                statusDot.classList.remove('bg-yellow-400', 'animate-pulse');
+                statusDot.classList.add('bg-orange-500');
+                statusText.innerText = "Mode Défaut (Fichier Excel 'banque_pti.xlsx' absent)";
+                statusText.classList.add('text-orange-600');
+                
+                renderLibrary('all');
+            }
+        }
+
+        // --- RENDER LIBRARY ---
+        function renderLibrary(filter, btn) {
+            if (database.length === 0) return;
+
+            if(btn) {
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.classList.remove('bg-slate-800', 'text-white');
+                    b.classList.add('bg-white', 'text-slate-600', 'border');
+                });
+                btn.classList.remove('bg-white', 'text-slate-600', 'border');
+                btn.classList.add('bg-slate-800', 'text-white');
+            }
+
+            const container = document.getElementById('library-container');
+            container.innerHTML = '';
+            
+            const filtered = filter === 'all' ? database : database.filter(i => i.cat === filter);
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-3 rounded shadow-sm border border-slate-200 hover:shadow-md transition-shadow h-full flex flex-col";
+                
+                // Truncate constats for display
+                const constatsDisplay = item.constats.length > 0 ? item.constats.slice(0, 3).join(', ') + (item.constats.length > 3 ? '...' : '') : 'Aucun constat';
+
+                let directivesList = item.directives.map((d, idx) => `
+                    <li class="directive-item flex items-start p-2 cursor-pointer border-b border-slate-50 last:border-0 rounded group" 
+                        onclick="addDirective('${item.title.replace(/'/g, "\\'")}', '${d.text.replace(/'/g, "\\'")}', '${d.role}')">
+                        <span class="role-badge role-${d.role.toLowerCase()} mt-0.5 flex-none">${d.role}</span>
+                        <span class="text-xs text-slate-600 leading-tight group-hover:text-teal-700">${d.text}</span>
+                        <i class="fa-solid fa-plus text-teal-400 ml-auto text-xs opacity-0 group-hover:opacity-100 pl-2"></i>
+                    </li>
+                `).join('');
+
+                card.innerHTML = `
+                    <div class="mb-2 pb-2 border-b border-slate-100">
+                        <span class="text-[9px] font-bold uppercase text-slate-400 border border-slate-100 px-1.5 py-0.5 rounded bg-slate-50 tracking-wide">${item.cat}</span>
+                        <h3 class="font-bold text-slate-800 mt-1 text-sm">${item.title}</h3>
+                        <p class="text-[10px] text-slate-400 mt-1 truncate italic">Ex: ${constatsDisplay}</p>
+                    </div>
+                    <ul class="flex-1 overflow-y-auto max-h-56 space-y-0.5 scrollbar-thin">${directivesList}</ul>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // --- PTI LOGIC ---
+        function addDirective(problem, text, role) {
+            if (!currentPTI[problem]) currentPTI[problem] = [];
+            if (currentPTI[problem].some(d => d.text === text)) return;
+            currentPTI[problem].push({ text, role });
+            updateSidebar();
+            
+            const badge = document.getElementById('pti-badge');
+            badge.classList.remove('hidden');
+            badge.classList.add('animate-bounce');
+            setTimeout(() => badge.classList.remove('animate-bounce'), 1000);
+        }
+
+        function removeDirective(problem, index) {
+            currentPTI[problem].splice(index, 1);
+            if (currentPTI[problem].length === 0) delete currentPTI[problem];
+            updateSidebar();
+        }
+
+        function updateSidebar() {
+            const tbody = document.getElementById('pti-table-body');
+            const visualTable = document.getElementById('pti-visual-table');
+            const emptyState = document.getElementById('empty-state');
+            const badge = document.getElementById('pti-badge');
+
+            tbody.innerHTML = '';
+            const problems = Object.keys(currentPTI);
+            
+            let totalDirs = 0;
+            problems.forEach(p => totalDirs += currentPTI[p].length);
+            badge.innerText = totalDirs;
+            badge.classList.toggle('hidden', totalDirs === 0);
+
+            if (problems.length === 0) {
+                visualTable.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            visualTable.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            problems.forEach(prob => {
+                const directives = currentPTI[prob];
+                const tr = document.createElement('tr');
+                const dirHtml = directives.map((d, i) => `
+                    <div class="flex justify-between items-start mb-1 group hover:bg-slate-50 p-1 rounded border-b border-dashed border-slate-100 last:border-0">
+                        <div class="text-xs">
+                            <span class="role-badge role-${d.role.toLowerCase()} text-[9px] mr-1 scale-90 origin-left">[${d.role}]</span> 
+                            <span class="text-slate-700">${d.text}</span>
+                        </div>
+                        <button onclick="removeDirective('${prob}', ${i})" class="text-slate-300 hover:text-red-500 ml-2 no-print p-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `).join('');
+                tr.innerHTML = `<td class="font-bold text-slate-700 bg-slate-50 text-xs align-top border-r border-slate-200">${prob}</td><td class="align-top">${dirHtml}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- PRINTING LOGIC ---
+        function printView(mode) {
+            const printArea = document.getElementById('print-area');
+            const problems = Object.keys(currentPTI);
+            if (problems.length === 0) return alert("Le panier PTI est vide.");
+            let content = '';
+
+            if (mode === 'pti') {
+                content = `
+                    <div style="font-family: sans-serif; color: #000;">
+                        <div style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+                            <h1 style="font-size: 16pt; font-weight: bold; margin: 0;">PLAN THÉRAPEUTIQUE INFIRMIER (PTI)</h1>
+                            <p style="margin: 5px 0 0 0; font-size: 10pt;">Soins de Longue Durée</p>
+                            <div style="margin-top:10px; font-size: 10pt;">Date: .............................. Heure: ............</div>
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
+                            <thead><tr style="background: #f0f0f0;"><th style="border: 1px solid #000; padding: 8px; text-align: left; width: 30%;">CONSTATS</th><th style="border: 1px solid #000; padding: 8px; text-align: left; width: 70%;">DIRECTIVES</th></tr></thead>
+                            <tbody>
+                                ${problems.map(prob => `
+                                    <tr>
+                                        <td style="border: 1px solid #000; padding: 8px; vertical-align: top;"><strong>${prob}</strong></td>
+                                        <td style="border: 1px solid #000; padding: 8px; vertical-align: top;">
+                                            <ul style="margin: 0; padding-left: 20px; list-style-type: square;">
+                                                ${currentPTI[prob].map(d => `<li style="margin-bottom: 4px;">${d.text} <span style="font-size:8pt; font-weight:bold;">[${d.role}]</span></li>`).join('')}
+                                            </ul>
+                                        </td>
+                                    </tr>`).join('')}
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 40px; font-size: 10pt; border-top:1px solid #000; padding-top:10px;"><p>Signature infirmière: ............................................................................ Permis: ...................</p></div>
+                    </div>`;
+            } else if (mode === 'plan') {
+                let allDir = [];
+                problems.forEach(p => { currentPTI[p].forEach(d => allDir.push({ prob: p, ...d })); });
+                const roles = [{code: 'PAB', title: 'PRÉPOSÉ(E) AUX BÉNÉFICIAIRES'}, {code: 'AUX', title: 'INFIRMIÈRE AUXILIAIRE'}, {code: 'INF', title: 'INFIRMIÈRE'}];
+                content = `<div style="font-family: sans-serif; color: #000;"><div style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;"><h1 style="font-size: 16pt; font-weight: bold; margin: 0;">PLAN DE TRAVAIL</h1><p style="margin: 0; font-size: 10pt;">Tâches par titre d'emploi</p></div>`;
+                roles.forEach(roleObj => {
+                    const tasks = allDir.filter(d => d.role === roleObj.code || d.role === 'ALL');
+                    if (tasks.length > 0) {
+                        content += `<div style="margin-bottom: 20px; border: 2px solid #000; page-break-inside: avoid;"><h3 style="margin: 0; background: #e0e0e0; padding: 8px; font-size: 12pt; border-bottom: 1px solid #000; font-weight:bold;">${roleObj.title}</h3><table style="width: 100%; border-collapse: collapse; font-size: 10pt;">${tasks.map(t => `<tr><td style="border-bottom: 1px solid #ccc; padding: 6px; width: 25%; font-weight:bold; background:#f9f9f9;">${t.prob}</td><td style="border-bottom: 1px solid #ccc; padding: 6px;">${t.text}</td></tr>`).join('')}</table></div>`;
+                    }
+                });
+                content += `</div>`;
+            }
+            printArea.innerHTML = content;
+            window.print();
+        }
+
+        // --- AI LOGIC (CALLS) ---
+        async function callGemini(prompt, system) {
+            const key = getApiKey();
+            if (!key) return "Clé API manquante.";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`;
+            const payload = { contents: [{ parts: [{ text: prompt }] }], systemInstruction: { parts: [{ text: system }] } };
+            try {
+                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if(!res.ok) throw new Error("API Error");
+                const data = await res.json();
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Erreur de réponse.";
+            } catch (e) {
+                return "Erreur de connexion avec l'IA. Vérifiez votre clé ou connexion.";
+            }
+        }
+
+        // --- UI HELPERS ---
+        function toggleSidebar() {
+            const sb = document.getElementById('pti-sidebar');
+            const ov = document.getElementById('overlay');
+            if (sb.classList.contains('translate-x-full')) {
+                sb.classList.remove('translate-x-full');
+                ov.classList.remove('hidden');
+                setTimeout(() => ov.classList.remove('opacity-0'), 10);
+            } else {
+                sb.classList.add('translate-x-full');
+                ov.classList.add('opacity-0');
+                setTimeout(() => ov.classList.add('hidden'), 300);
+            }
+        }
+        
+        function openAIModal(mode) {
+            const modal = document.getElementById('ai-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            if (mode === 'coach') switchTab('coach');
+        }
+        
+        function closeAIModal() {
+            const modal = document.getElementById('ai-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function switchTab(mode) {
+            currentTab = mode;
+            const btnCoach = document.getElementById('tab-coach');
+            const btnManual = document.getElementById('tab-manual');
+            const chatInput = document.getElementById('ai-input-container');
+            const manualInput = document.getElementById('manual-input-section');
+            const footer = document.getElementById('ai-note-footer');
+            const output = document.getElementById('ai-output');
+
+            // Reset classes
+            btnCoach.className = "flex-1 py-3 text-sm font-medium transition-colors inactive-tab";
+            btnManual.className = "flex-1 py-3 text-sm font-medium transition-colors inactive-tab";
+
+            if (mode === 'coach') {
+                btnCoach.className = "flex-1 py-3 text-sm font-medium transition-colors active-tab";
+                chatInput.classList.remove('hidden');
+                manualInput.classList.add('hidden');
+                footer.classList.add('hidden');
+                if (output.innerHTML === "") output.innerHTML = '<div class="text-center text-slate-400 mt-20"><i class="fa-solid fa-user-nurse text-4xl mb-3 text-indigo-200"></i><p>Posez une question sur une procédure ou un médicament.</p></div>';
+            } else if (mode === 'manual') {
+                btnManual.className = "flex-1 py-3 text-sm font-medium transition-colors active-tab";
+                chatInput.classList.add('hidden');
+                manualInput.classList.remove('hidden'); 
+                footer.classList.remove('hidden');
+                if (output.innerHTML === "" || output.innerHTML.includes("Posez une question")) output.innerHTML = '<div class="text-center text-slate-400 mt-10"><p>Rédigez la situation ci-dessus et cliquez sur générer.</p></div>';
+            } else if (mode === 'pti-result') {
+                btnManual.className = "flex-1 py-3 text-sm font-medium transition-colors active-tab"; 
+                chatInput.classList.add('hidden');
+                manualInput.classList.add('hidden'); 
+                footer.classList.remove('hidden');
+            }
+        }
+
+        // --- GENERATION FUNCTIONS ---
+
+        // 1. CHAT COACH
+        async function sendChat() {
+            const input = document.getElementById('ai-input');
+            const q = input.value;
+            if(!q) return;
+            const out = document.getElementById('ai-output');
+            out.innerHTML += `<div class="mb-3 text-right"><span class="bg-indigo-100 text-indigo-800 py-2 px-3 rounded-lg inline-block text-xs font-medium">${q}</span></div>`;
+            out.innerHTML += `<div class="mb-3 loading-indicator"><span class="typing-dot"></span></div>`;
+            out.scrollTop = out.scrollHeight;
+            input.value = "";
+            const system = "Tu es un expert clinique en soins de longue durée au Québec. Réponses concises, normes OIIQ.";
+            const response = await callGemini(q, system);
+            document.querySelector('.loading-indicator').remove();
+            out.innerHTML += `<div class="mb-5 text-slate-800 bg-slate-50 p-4 rounded-lg border border-slate-100 shadow-sm prose prose-sm max-w-none">${marked.parse(response)}</div>`;
+            out.scrollTop = out.scrollHeight;
+        }
+
+        // 2. NOTE PTI (FROM BASKET)
+        async function generatePTINote() {
+            const problems = Object.keys(currentPTI);
+            if(problems.length === 0) return alert("Veuillez d'abord ajouter des éléments au PTI.");
+
+            openAIModal(); // Open Modal
+            switchTab('pti-result'); // Switch to result view
+
+            document.getElementById('ai-output').innerHTML = '<div class="text-center mt-20"><div class="flex justify-center mb-2"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div><span class="text-xs text-slate-400 font-medium">L\'IA analyse le PTI...</span></div>';
+
+            let context = "";
+            problems.forEach(p => {
+                context += `PROBLÈME: ${p}\n`;
+                currentPTI[p].forEach(d => context += `- ${d.text}\n`);
+            });
+
+            const prompt = `Voici les constats et interventions PTI :\n${context}\n\nRédige une note d'évolution narrative TRÈS CONCISE (style télégraphique amélioré). \n\nCONSIGNES:\n1. Max 3-4 phrases. Droit au but.\n2. Résume les interventions.\n3. Pas de date/heure/signature.\n4. Vocabulaire infirmier Québec.`;
+            const system = "Tu es une infirmière expérimentée en CHSLD.";
+            
+            const response = await callGemini(prompt, system);
+            document.getElementById('ai-output').innerHTML = `<div class="prose prose-sm max-w-none text-slate-700">${marked.parse(response)}</div>`;
+        }
+
+        // 3. NOTE MANUELLE (FROM TEXTAREA)
+        async function generateManualNote() {
+            const text = document.getElementById('manual-text').value;
+            if(!text) return alert("Veuillez décrire la situation.");
+
+            const out = document.getElementById('ai-output');
+            out.innerHTML = '<div class="text-center mt-10"><div class="flex justify-center mb-2"><span class="typing-dot"></span></div><span class="text-xs text-slate-400 font-medium">Rédaction en cours...</span></div>';
+
+            const prompt = `Voici une situation décrite en vrac :\n"${text}"\n\nRédige une note d'évolution professionnelle et CONCISE pour le dossier (style infirmier).\n\nCONSIGNES:\n1. Structure les faits.\n2. Enlève le superflu.\n3. Utilise le vocabulaire médical approprié.\n4. Max 4-5 lignes.`;
+            const system = "Tu es une infirmière experte en documentation clinique. Tu reformules les notes brouillons en notes professionnelles.";
+
+            const response = await callGemini(prompt, system);
+            out.innerHTML = `<div class="bg-teal-50 p-4 rounded-lg border border-teal-100 text-slate-800 prose prose-sm max-w-none">${marked.parse(response)}</div>`;
+        }
+
+        function copyNote() {
+            const text = document.getElementById('ai-output').innerText;
+            navigator.clipboard.writeText(text);
+            const btn = document.querySelector('#ai-note-footer button');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Copié!';
+            btn.classList.add('bg-green-600');
+            setTimeout(() => { btn.innerHTML = originalHTML; btn.classList.remove('bg-green-600'); }, 2000);
+        }
+        function filterLib(cat, btn) { renderLibrary(cat, btn); }
+    </script>
+</body>
+</html>
