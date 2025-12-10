@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PTI EXPERT LONGUE DURÉE</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Markdown Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; }
+        h1, h2, h3 { font-family: 'Roboto', sans-serif; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+
+        /* Card Hover */
+        .directive-item:hover { background-color: #f0f9ff; border-left: 3px solid #0ea5e9; }
+        .directive-item { transition: all 0.1s ease; border-left: 3px solid transparent; }
+        
+        /* PTI Table Styling */
+        .pti-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 10px; }
+        .pti-table th { background-color: #e2e8f0; padding: 10px; text-align: left; font-weight: bold; border: 2px solid #94a3b8; text-transform: uppercase; }
+        .pti-table td { padding: 10px; border: 1px solid #cbd5e1; vertical-align: top; }
+        
+        /* === FIX IMPORTANT : On cache la zone d'impression sur l'écran === */
+        #print-area { display: none; }
+
+        /* PRINT STYLES - ROBUST FIX */
+        @media print {
+            body > * { display: none !important; } /* Cache tout le body */
+            
+            #print-area { 
+                display: block !important; /* Affiche SEULEMENT la zone d'impression */
+                position: absolute; 
+                top: 0; 
+                left: 0; 
+                width: 100%; 
+                height: auto; 
+                z-index: 9999; 
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            #print-area * { visibility: visible !important; }
+            .role-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 1px solid #ccc; }
+            table, tr, td, th { page-break-inside: avoid; }
+            @page { margin: 1.5cm; size: portrait; }
+        }
+
+        .role-badge {
+            font-size: 0.60rem; padding: 2px 5px; border-radius: 4px; font-weight: 800; text-transform: uppercase; margin-right: 6px; display: inline-block; min-width: 35px; text-align: center;
+        }
+        /* Role Colors */
+        .role-pab { background-color: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; } 
+        .role-aux { background-color: #fce7f3; color: #831843; border: 1px solid #f9a8d4; }
+        .role-inf { background-color: #dcfce7; color: #14532d; border: 1px solid #86efac; }
+        .role-all { background-color: #f1f5f9; color: #334151; border: 1px solid #cbd5e1; }
+
+        .typing-dot {
+            animation: typing 1.4s infinite ease-in-out both;
+            width: 6px; height: 6px; background-color: #475569; border-radius: 50%; display: inline-block; margin: 0 2px;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        .active-tab { border-bottom: 2px solid #0d9488; color: #0f766e; font-weight: bold; background: #f0fdfa; }
+        .inactive-tab { color: #64748b; background: #f8fafc; }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden bg-slate-50">
+
+    <!-- Header -->
+    <header class="bg-slate-800 text-white h-14 flex items-center justify-between px-4 shadow-lg z-20 flex-none">
+        <div class="flex items-center gap-3">
+            <div class="bg-teal-600 p-1.5 rounded"><i class="fa-solid fa-notes-medical text-white text-lg"></i></div>
+            <div>
+                <h1 class="text-base font-bold leading-tight">PTI EXPERT <span class="text-teal-400">LONGUE DURÉE</span></h1>
+                <p class="text-[10px] text-slate-400">Assistant Clinique</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="openAIModal('coach')" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded font-bold transition-colors flex items-center gap-2 border border-indigo-400 shadow-sm">
+                <i class="fa-solid fa-user-doctor"></i> Coach Clinique
+            </button>
+            <button onclick="toggleSidebar()" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded font-bold transition-colors flex items-center gap-2 border border-slate-500 shadow-sm relative">
+                <i class="fa-solid fa-clipboard-list"></i>
+                <span>Panier PTI</span>
+                <span id="pti-badge" class="absolute -top-1 -right-1 bg-red-500 text-white px-1.5 h-4 flex items-center justify-center rounded-full text-[9px] hidden shadow-sm border border-white">0</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        
+        <!-- Left: Library (Scrollable) -->
+        <main class="flex-1 overflow-y-auto p-4 bg-slate-100" id="main-library">
+            
+            <!-- Filters -->
+            <div class="bg-white p-3 rounded-lg shadow-sm border border-slate-200 mb-4 sticky top-0 z-10 flex flex-wrap gap-2 items-center">
+                <span class="text-[10px] uppercase font-bold text-slate-400 mr-2"><i class="fa-solid fa-filter mr-1"></i>Catégories:</span>
+                <button class="filter-btn active bg-slate-800 text-white text-xs px-3 py-1.5 rounded font-bold transition-colors" onclick="filterLib('all', this)">Tout</button>
+                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('scpd', this)">SCPD & Neuro</button>
+                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('soins', this)">Soins Physiques</button>
+                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('clinique', this)">Médical</button>
+                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('hdevie', this)">Habitudes de Vie</button>
+                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('infection', this)">Infections</button>
+                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('palliatif', this)">Palliatif</button>
+            </div>
+
+            <!-- Library Grid -->
+            <div id="library-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-12">
+                <!-- Cards injected via JS -->
+            </div>
+        </main>
+
+        <!-- Right: PTI Sidebar (Overlay/Slide-in) -->
+        <aside id="pti-sidebar" class="fixed inset-y-0 right-0 w-full md:w-[700px] bg-white shadow-2xl z-40 transform translate-x-full transition-transform duration-300 flex flex-col border-l border-slate-200">
+            
+            <!-- Sidebar Header -->
+            <div class="p-4 bg-slate-800 text-white flex justify-between items-center shadow-md flex-none">
+                <div>
+                    <h3 class="font-bold text-sm uppercase"><i class="fa-solid fa-file-signature mr-2"></i> Prévisualisation PTI</h3>
+                    <p class="text-[10px] text-slate-300">Format officiel (OIIQ/MSSS) + Plan de Travail</p>
+                </div>
+                <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <!-- PTI Content (Scrollable) -->
+            <div class="flex-1 overflow-y-auto p-6 bg-white" id="pti-content">
+                <div id="empty-state" class="flex flex-col items-center justify-center h-full text-slate-300">
+                    <i class="fa-solid fa-folder-plus text-6xl mb-4 text-slate-200"></i>
+                    <p class="text-sm font-bold">Panier vide</p>
+                    <p class="text-xs mt-1">Sélectionnez des directives dans la banque.</p>
+                </div>
+                
+                <!-- The Visual PTI Table -->
+                <div id="pti-visual-table" class="hidden">
+                    <div class="border-b-2 border-slate-800 mb-4 pb-2 flex justify-between items-end">
+                        <h2 class="font-bold text-xl text-slate-800 tracking-tight">PLAN THÉRAPEUTIQUE</h2>
+                        <span class="text-xs text-slate-500 uppercase font-bold tracking-wider">Document Légal</span>
+                    </div>
+                    <table class="pti-table shadow-sm">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%;">CONSTATS (PQRSTU)</th>
+                                <th style="width: 70%;">DIRECTIVES INFIRMIÈRES & SURVEILLANCE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pti-table-body">
+                            <!-- Rows generated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Action Footer -->
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex-none space-y-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                
+                <!-- AI Generation (PTI BASED) -->
+                <button onclick="generatePTINote()" class="w-full bg-teal-700 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded shadow-sm text-sm flex justify-center items-center gap-2 group transition-all">
+                    <i class="fa-solid fa-wand-magic-sparkles text-yellow-300 group-hover:rotate-12 transition-transform"></i> 
+                    Générer Note Évolution (Basée sur PTI)
+                </button>
+
+                <!-- Print Buttons Row -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="printView('pti')" class="bg-slate-800 hover:bg-slate-700 text-white py-2.5 px-3 rounded text-xs font-bold flex justify-center items-center gap-2 shadow transition-colors">
+                        <i class="fa-solid fa-print"></i> Imprimer PTI (Légal)
+                    </button>
+                    <button onclick="printView('plan')" class="bg-white hover:bg-slate-100 text-slate-800 py-2.5 px-3 rounded text-xs font-bold flex justify-center items-center gap-2 border border-slate-300 shadow-sm transition-colors">
+                        <i class="fa-solid fa-users-gear text-blue-600"></i> Imprimer Plan de Travail
+                    </button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Overlay -->
+    <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden backdrop-blur-sm transition-opacity"></div>
+
+    <!-- AI Modal -->
+    <div id="ai-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeAIModal()"></div>
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col relative z-10 overflow-hidden transform transition-all">
+            
+            <!-- Modal Header -->
+            <div class="flex border-b border-slate-200 bg-slate-50">
+                <button id="tab-coach" class="flex-1 py-3 text-sm font-medium transition-colors active-tab" onclick="switchTab('coach')">
+                    <i class="fa-solid fa-user-doctor mr-2"></i>Coach Clinique
+                </button>
+                <button id="tab-manual" class="flex-1 py-3 text-sm font-medium transition-colors inactive-tab" onclick="switchTab('manual')">
+                    <i class="fa-solid fa-pen-fancy mr-2"></i>Rédacteur Note
+                </button>
+                <button onclick="closeAIModal()" class="px-5 text-slate-400 hover:text-slate-600 border-l border-slate-200 hover:bg-slate-100 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <!-- MANUAL INPUT (Visible only in Manual tab) -->
+            <div id="manual-input-section" class="hidden p-4 bg-slate-50 border-b border-slate-200">
+                <p class="text-xs text-slate-500 mb-2 font-bold uppercase"><i class="fa-solid fa-keyboard mr-1"></i> Décrivez la situation à résumer :</p>
+                <textarea id="manual-text" class="w-full border border-slate-300 rounded p-3 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 mb-3" rows="3" placeholder="Ex: Résident a chuté dans sa chambre à 14h00. Pas de blessure apparente. Signes vitaux normaux. Famille avisée..."></textarea>
+                <button onclick="generateManualNote()" class="w-full bg-teal-600 text-white font-bold py-2 rounded shadow-sm hover:bg-teal-700 transition-colors flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-pen-nib"></i> Rédiger la note concise
+                </button>
+            </div>
+
+            <!-- Content Output -->
+            <div id="ai-output" class="flex-1 overflow-y-auto p-6 text-sm text-slate-800 leading-relaxed bg-white font-medium"></div>
+            
+            <!-- Input (Coach Chat) -->
+            <div id="ai-input-container" class="hidden p-4 border-t border-slate-200 bg-slate-50 flex gap-2">
+                <input type="text" id="ai-input" class="flex-1 border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm" placeholder="Question clinique...">
+                <button onclick="sendChat()" class="bg-indigo-600 text-white px-5 rounded-lg hover:bg-indigo-700 shadow-md"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+            
+            <!-- Footer (Copy) -->
+            <div id="ai-note-footer" class="hidden p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 items-center">
+                <span class="text-xs text-slate-500 mr-auto italic flex items-center"><i class="fa-solid fa-circle-info mr-1 text-blue-400"></i> Vérifier le contenu avant signature.</span>
+                <button onclick="copyNote()" class="bg-slate-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-800 shadow-md flex items-center gap-2"><i class="fa-regular fa-copy"></i>Copier le texte</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Print Area -->
+    <div id="print-area"></div>
+
+    <!-- Logic -->
+    <script>
+        // --- API KEY MANAGEMENT ---
+        const YOUR_HARDCODED_KEY = "AIzaSyBwW2cqKeSIxTREdZlAjo7o4J25NboztdI"; 
+
+        // Gestion automatique de la clé
+        function getApiKey() {
+            if (YOUR_HARDCODED_KEY && YOUR_HARDCODED_KEY.length > 10) return YOUR_HARDCODED_KEY;
+            let storedKey = localStorage.getItem('gemini_api_key');
+            if (storedKey) return storedKey;
+            const key = prompt("Pour utiliser l'IA, entrez votre clé API Google Gemini :");
+            if (key) {
+                localStorage.setItem('gemini_api_key', key.trim());
+                return key.trim();
+            }
+            return "";
+        }
+
+        // --- MASSIVE CLINICAL DATABASE ---
+        const database = [
+            // --- SCPD / COGNITIF ---
+            {
+                id: 'scpd_resist', cat: 'scpd', title: 'Résistance aux Soins / Hygiène',
+                constats: ["Ferme la bouche", "Pousse/Frappe", "Rigidité musculaire", "Aggripement", "Cris aux soins"],
+                directives: [
+                    { role: 'PAB', text: "Utiliser la technique du leurre (objet dans la main) pour occuper les mains durant le soin." },
+                    { role: 'PAB', text: "Laver les parties les moins sensibles (dos, jambes) en premier pour apprivoiser le contact." },
+                    { role: 'PAB', text: "Respecter le refus (STOP) et réessayer 15 min plus tard (GO) pour éviter l'escalade." },
+                    { role: 'PAB', text: "Procéder à une toilette partielle au lavabo si la douche provoque une détresse importante." },
+                    { role: 'PAB', text: "Couvrir le résident avec une serviette chaude durant le bain pour éviter la sensation de froid." },
+                    { role: 'AUX', text: "Expliquer chaque geste avant de le poser avec des phrases courtes et simples." },
+                    { role: 'INF', text: "Administrer l'analgésie 45 min avant les soins d'hygiène si douleur suspectée." },
+                    { role: 'ALL', text: "Ne jamais forcer physiquement; prioriser la relation de confiance." },
+                    { role: 'PAB', text: "Demander l'aide d'un collègue pour faire diversion (chanter, jaser) pendant le soin." },
+                    { role: 'INF', text: "Réévaluer l'heure du soin (soir vs matin) selon le rythme circadien du résident." },
+                    { role: 'PAB', text: "Utiliser des produits sans rinçage si l'eau est la source de l'aversion." },
+                    { role: 'INF', text: "Évaluer si le résident préfère un soignant du même sexe." }
+                ]
+            },
+            {
+                id: 'scpd_agitation', cat: 'scpd', title: 'Agitation Verbale / Physique',
+                constats: ["Crie répétitivement", "Sacres/Insultes", "Détresse vocale", "Demandes incessantes", "Lancer d'objets"],
+                directives: [
+                    { role: 'PAB', text: "Amener le résident dans sa chambre (endroit calme) pour diminuer les stimuli environnementaux." },
+                    { role: 'PAB', text: "Mettre de la musique douce personnalisée (casque ou radio) pour favoriser la détente." },
+                    { role: 'PAB', text: "Utiliser le toucher thérapeutique (massage des mains) si le résident l'accepte." },
+                    { role: 'AUX', text: "Vérifier le confort physique immédiat (couche souillée, soif, position)." },
+                    { role: 'INF', text: "Valider l'émotion exprimée ('Je vois que vous êtes fâché') pour diminuer l'anxiété." },
+                    { role: 'INF', text: "Administrer la médication PRN seulement après échec des approches non pharmaco." },
+                    { role: 'ALL', text: "Adopter une approche calme, ton de voix bas, se placer à la hauteur des yeux." },
+                    { role: 'PAB', text: "Offrir une marche accompagnée pour canaliser le surplus d'énergie motrice." },
+                    { role: 'PAB', text: "Proposer une activité de diversion simple (ex: pliage de débarbouillettes)." },
+                    { role: 'INF', text: "Évaluer la présence de douleur (PACSLAC) non exprimée verbalement." },
+                    { role: 'ALL', text: "Éviter la confrontation ou l'argumentation avec le résident." },
+                    { role: 'AUX', text: "Prendre les signes vitaux pour éliminer une cause physiologique aigue." }
+                ]
+            },
+            {
+                id: 'scpd_errance', cat: 'scpd', title: 'Errance / Déambulation',
+                constats: ["Cherche la sortie", "Entre dans chambre autrui", "Déambulation excessive", "Risque d'épuisement", "Suit le personnel"],
+                directives: [
+                    { role: 'PAB', text: "Rediriger verbalement vers les aires communes sans confrontation physique." },
+                    { role: 'PAB', text: "Proposer une marche accompagnée à l'extérieur ou au corridor pour sécuriser le résident." },
+                    { role: 'PAB', text: "Offrir une collation ou un breuvage hypercalorique pour compenser la dépense énergétique." },
+                    { role: 'AUX', text: "Vérifier systématiquement si un besoin de base (faim, soif, toilette) est insatisfait." },
+                    { role: 'INF', text: "Évaluer la douleur ou l'inconfort comme cause possible de l'agitation motrice." },
+                    { role: 'ALL', text: "Valider le but du résident ('Vous cherchez votre mère?') pour diminuer l'anxiété." },
+                    { role: 'PAB', text: "Installer le bracelet de prévention des fugues et vérifier son fonctionnement au début du quart." },
+                    { role: 'PAB', text: "Placer une photo significative ou un objet personnel sur la porte de la chambre pour l'orientation." },
+                    { role: 'PAB', text: "Asseoir le résident dans un fauteuil roulant et le promener s'il est à risque de chute par fatigue." },
+                    { role: 'INF', text: "Réviser si la médication actuelle cause de l'akathisie (besoin impérieux de bouger)." },
+                    { role: 'ALL', text: "S'assurer que le résident porte des chaussures adéquates pour la marche sécuritaire." },
+                    { role: 'AUX', text: "Noter les périodes d'errance au dossier pour identifier un pattern (ex: fin pm)." }
+                ]
+            },
+            {
+                id: 'scpd_sex', cat: 'scpd', title: 'Comportements Sexuels Inappropriés',
+                constats: ["Touchers", "Propos sexuels", "Exhibitionnisme", "Désinhibition"],
+                directives: [
+                    { role: 'ALL', text: "Rediriger calmement vers un comportement socialement acceptable." },
+                    { role: 'ALL', text: "Dire fermement mais calmement 'Non, ce n'est pas permis ici'." },
+                    { role: 'PAB', text: "Amener à la chambre pour intimité si désinhibition (masturbation)." },
+                    { role: 'PAB', text: "Vérifier si vêtements trop serrés ou irritation génitale causent le geste." },
+                    { role: 'INF', text: "Évaluer si effet secondaire médication (désinhibition frontale)." },
+                    { role: 'ALL', text: "Ne pas rire ni se moquer, garder une attitude professionnelle." },
+                    { role: 'PAB', text: "Détourner l'attention avec une activité manuelle ou une conversation." },
+                    { role: 'PAB', text: "Habiller le résident avec des vêtements plus difficiles à retirer (combinaison)." },
+                    { role: 'AUX', text: "Noter le contexte du comportement (heure, lieu, déclencheur) au dossier." },
+                    { role: 'INF', text: "Réviser l'histoire de vie pour comprendre le sens du geste." },
+                    { role: 'ALL', text: "Protéger les autres résidents vulnérables si tentatives de contact." },
+                    { role: 'INF', text: "Discuter avec le médecin si le comportement devient prédateur ou dangereux." }
+                ]
+            },
+            {
+                id: 'psy_depress', cat: 'scpd', title: 'Dépression / Isolement',
+                constats: ["Pleurs fréquents", "Retrait social", "Perte d'appétit", "Propos sombres", "Hypersomnie"],
+                directives: [
+                    { role: 'ALL', text: "Stimuler doucement à participer aux activités selon ses intérêts passés." },
+                    { role: 'PAB', text: "Passer du temps de qualité (jasette) 10-15 min par jour sans faire de soins." },
+                    { role: 'INF', text: "Évaluer le risque suicidaire si le résident tient des propos sombres." },
+                    { role: 'AUX', text: "Surveiller les ingesta et aviser si perte d'appétit persistante." },
+                    { role: 'ALL', text: "Ouvrir les rideaux le jour pour assurer une luminosité maximale." },
+                    { role: 'PAB', text: "Encourager le résident à se vêtir avec ses beaux habits pour l'estime de soi." },
+                    { role: 'INF', text: "Évaluer l'efficacité des antidépresseurs après 4-6 semaines." },
+                    { role: 'PAB', text: "Favoriser les contacts avec la famille (aide pour appel vidéo/téléphone)." },
+                    { role: 'ALL', text: "Valoriser les petites réussites et l'autonomie du résident." },
+                    { role: 'PAB', text: "Proposer de sortir prendre l'air ou aller au salon." },
+                    { role: 'INF', text: "Vérifier si la douleur chronique est mal soulagée (facteur dépressif)." },
+                    { role: 'ALL', text: "Écouter activement sans juger ni banaliser les sentiments exprimés." }
+                ]
+            },
+            {
+                id: 'psy_anxiete', cat: 'scpd', title: 'Anxiété Généralisée',
+                constats: ["Demandes répétitives", "Inquiétude", "Tremblements", "Hypervigilance"],
+                directives: [
+                    { role: 'ALL', text: "Rassurer verbalement sur la sécurité et la présence du personnel." },
+                    { role: 'PAB', text: "Établir une routine quotidienne prévisible pour sécuriser." },
+                    { role: 'INF', text: "Enseigner techniques de respiration simple lors des crises." },
+                    { role: 'ALL', text: "Éviter de confronter les idées fausses, faire plutôt diversion." },
+                    { role: 'PAB', text: "Proposer des activités relaxantes (musique, TV calme, lecture)." },
+                    { role: 'AUX', text: "Réduire la caféine et les stimulants dans l'alimentation." },
+                    { role: 'INF', text: "Évaluer si l'anxiété augmente à certains moments (ex: changement quart)." },
+                    { role: 'PAB', text: "Laisser une veilleuse allumée la nuit si peur du noir." },
+                    { role: 'ALL', text: "Répondre aux cloches d'appel rapidement pour diminuer l'insécurité." },
+                    { role: 'PAB', text: "Toucher rassurant (épaule, main) si toléré par le résident." },
+                    { role: 'INF', text: "Vérifier si dyspnée ou douleur thoracique associée (angoisse)." },
+                    { role: 'ALL', text: "Parler doucement et lentement." }
+                ]
+            },
+            {
+                id: 'scpd_sommeil', cat: 'scpd', title: 'Troubles du Sommeil',
+                constats: ["Errance nocturne", "Inversion jour/nuit", "Fatigue diurne"],
+                directives: [
+                    { role: 'PAB', text: "Éviter les siestes après 14h00 pour favoriser le sommeil nocturne." },
+                    { role: 'PAB', text: "Offrir collation légère ou lait chaud au coucher (effet apaisant)." },
+                    { role: 'INF', text: "Évaluer si douleur ou besoin urinaire réveille le résident." },
+                    { role: 'ALL', text: "Exposition à la lumière vive le matin pour réguler l'horloge biologique." },
+                    { role: 'PAB', text: "Maintenir l'environnement calme et sombre la nuit." },
+                    { role: 'PAB', text: "Encourager les activités physiques le matin et l'après-midi." },
+                    { role: 'AUX', text: "Éviter les stimulants (café, thé) après le souper." },
+                    { role: 'PAB', text: "Proposer une toilette partielle ou un massage au coucher pour détendre." },
+                    { role: 'INF', text: "Réviser si la médication est prise trop tard (diurétiques)." },
+                    { role: 'PAB', text: "Si éveillé la nuit, ne pas stimuler; garder les lumières tamisées." },
+                    { role: 'ALL', text: "Respecter les rituels du coucher du résident (prière, toutou, radio)." },
+                    { role: 'INF', text: "Évaluer l'efficacité des hypnotiques si prescrits." }
+                ]
+            },
+
+            // --- PHYSIQUE / SOINS ---
+            {
+                id: 'phy_chute', cat: 'soins', title: 'Risque de Chute Élevé',
+                constats: ["Marche instable", "Antécédent de chute", "Impulsivité", "Oubli de la marchette", "Hypotension orthostatique"],
+                directives: [
+                    { role: 'PAB', text: "S'assurer que le résident porte des chaussures antidérapantes bien ajustées dès le lever." },
+                    { role: 'PAB', text: "Laisser la cloche d'appel à portée de main et vérifier si le résident peut l'utiliser." },
+                    { role: 'PAB', text: "Mettre le lit en position la plus basse possible avec un tapis de chute au sol la nuit." },
+                    { role: 'PAB', text: "Accompagner à la toilette aux 2 heures (horaire mictionnel) pour éviter les levers précipités." },
+                    { role: 'AUX', text: "Vérifier le bon fonctionnement de l'alarme de lit/fauteuil au début du quart." },
+                    { role: 'PAB', text: "Assurer une surveillance visuelle fréquente (laisser la porte de chambre ouverte)." },
+                    { role: 'INF', text: "Évaluer la présence d'hypotension orthostatique (TA couchée/debout)." },
+                    { role: 'ALL', text: "Dégager l'environnement de tout obstacle (fils, tapis, meubles encombrants)." },
+                    { role: 'PAB', text: "Installer les protecteurs de hanches le jour pour prévenir les fractures." },
+                    { role: 'PAB', text: "Rapprocher la table de chevet pour que les objets (eau, lunettes) soient accessibles." },
+                    { role: 'INF', text: "Réviser la médication causant de la somnolence ou des étourdissements." },
+                    { role: 'PAB', text: "Utiliser la marchette ou le fauteuil roulant tel qu'indiqué au plan de déplacement." }
+                ]
+            },
+            {
+                id: 'phy_postchute', cat: 'soins', title: 'Surveillance Post-Chute',
+                constats: ["Chute récente", "Hématome", "Confusion nouvelle"],
+                directives: [
+                    { role: 'AUX', text: "Prendre signes vitaux et neuro (Glasgow) q. 4h x 24h." },
+                    { role: 'ALL', text: "Surveiller signes hypertension crânienne (vomissements, somnolence)." },
+                    { role: 'INF', text: "Réévaluer analgésie si douleur apparue post-chute." },
+                    { role: 'PAB', text: "Aide accrue aux transferts pour les prochaines 48h (crainte de rechute)." },
+                    { role: 'INF', text: "Examiner la peau pour nouvelles ecchymoses lors des soins." },
+                    { role: 'ALL', text: "Réviser les circonstances de la chute pour prévenir récidive." },
+                    { role: 'AUX', text: "Aviser famille de la chute selon protocole de l'établissement." },
+                    { role: 'PAB', text: "Encourager le repos au lit si étourdissements persistent." },
+                    { role: 'INF', text: "Surveiller hématurie (sang urine) si chute au sol." },
+                    { role: 'ALL', text: "Remplir rapport d'incident/accident (AH-223) avant fin de quart." },
+                    { role: 'PAB', text: "Vérifier fonctionnement des aides techniques (freins fauteuil)." },
+                    { role: 'INF', text: "Considérer protecteurs de hanches si chutes fréquentes." }
+                ]
+            },
+            {
+                id: 'phy_position', cat: 'soins', title: 'Immobilité / Positionnement',
+                constats: ["Glisse fauteuil", "Penche côté", "Inconfort", "Rougeur"],
+                directives: [
+                    { role: 'PAB', text: "Repositionner au fauteuil q. 1h pour soulager points pression." },
+                    { role: 'PAB', text: "Utiliser la bascule (tilt) pour reposer le dos périodiquement." },
+                    { role: 'PAB', text: "Installer ceinture de positionnement si prescrite (vérifier ajustement)." },
+                    { role: 'PAB', text: "Utiliser des coussins latéraux pour corriger la posture penchée." },
+                    { role: 'AUX', text: "Vérifier rougeur au coccyx lors des transferts/changements." },
+                    { role: 'PAB', text: "Élever les jambes sur un pouf pour favoriser retour veineux." },
+                    { role: 'ALL', text: "S'assurer que les pieds touchent le sol ou les appuie-pieds." },
+                    { role: 'INF', text: "Évaluer la pertinence d'une consultation en ergothérapie." },
+                    { role: 'PAB', text: "Remonter le résident avec un piqué (pas sous les bras) pour éviter blessures." },
+                    { role: 'ALL', text: "Vérifier que la peau ne touche pas les armatures du fauteuil." },
+                    { role: 'PAB', text: "Alterner entre lit et fauteuil si fatigue importante." },
+                    { role: 'INF', text: "Vérifier état cutané quotidiennement." }
+                ]
+            },
+
+            // --- CLINIQUE / MÉDICAL ---
+            {
+                id: 'clin_diabete', cat: 'clinique', title: 'Diabète (Type 2 / Insuline)',
+                constats: ["Glycémie instable", "Hypoglycémie", "Neuropathie", "Plaie pied"],
+                directives: [
+                    { role: 'AUX', text: "Prendre la glycémie capillaire AC (avant repas) et HS (coucher) selon ordonnance." },
+                    { role: 'PAB', text: "Aviser l'infirmière immédiatement si le résident ne mange pas la moitié de son repas." },
+                    { role: 'PAB', text: "Rapporter tout signe d'hypoglycémie (sueurs froides, tremblements, confusion)." },
+                    { role: 'AUX', text: "Interdiction formelle de couper les ongles d'orteils (référer en podiatrie)." },
+                    { role: 'INF', text: "Appliquer le protocole d'hypoglycémie si la glycémie est < 4.0 mmol/L." },
+                    { role: 'PAB', text: "Ne jamais laisser le résident marcher pieds nus pour éviter les blessures." },
+                    { role: 'PAB', text: "Donner la collation de soirée prévue pour prévenir l'hypoglycémie nocturne." },
+                    { role: 'AUX', text: "Inspecter la peau des pieds quotidiennement lors de l'hygiène (rougeur, plaie)." },
+                    { role: 'PAB', text: "Bien assécher entre les orteils après la douche." },
+                    { role: 'INF', text: "Ajuster l'insuline selon l'échelle mobile prescrite." },
+                    { role: 'PAB', text: "S'assurer que les chaussures ne blessent pas les pieds." },
+                    { role: 'ALL', text: "Aviser si le résident cache de la nourriture sucrée dans sa chambre." }
+                ]
+            },
+            {
+                id: 'clin_refus_rx', cat: 'clinique', title: 'Refus de Médication',
+                constats: ["Crache les pilules", "Serre les dents", "Dit non verbalement", "Détourne la tête"],
+                directives: [
+                    { role: 'INF', text: "Tenter l'administration à 3 reprises espacées de 15 minutes pour respecter le rythme du résident." },
+                    { role: 'INF', text: "Écraser les médicaments dans la compote de pommes si permis par la pharmacie (pas de LA/CD)." },
+                    { role: 'INF', text: "Offrir le médicament avec l'aliment ou le breuvage préféré du résident (jus, crème glacée)." },
+                    { role: 'ALL', text: "Ne jamais forcer l'ouverture de la bouche ni utiliser la contrainte physique." },
+                    { role: 'INF', text: "Documenter le refus au dossier et aviser le médecin si refus > 24h ou médication critique." },
+                    { role: 'INF', text: "Vérifier si une forme liquide du médicament est disponible avec la pharmacie." },
+                    { role: 'INF', text: "Évaluer si le résident a de la douleur à la déglutition (dysphagie)." },
+                    { role: 'PAB', text: "Assister l'infirmière pour créer une diversion agréable durant l'administration." },
+                    { role: 'INF', text: "Tenter de donner la médication à un moment où le résident est plus éveillé/calme." },
+                    { role: 'INF', text: "Expliquer simplement le but du médicament ('C'est pour votre mal de dos')." },
+                    { role: 'AUX', text: "Surveiller l'apparition de symptômes de sevrage ou de décompensation suite au refus." },
+                    { role: 'INF', text: "Réévaluer la pertinence de la médication avec le médecin (déprescription possible?)." }
+                ]
+            },
+            {
+                id: 'clin_icc', cat: 'clinique', title: 'Insuffisance Cardiaque (IC)',
+                constats: ["Oedème MI", "Essoufflement", "Gain poids rapide"],
+                directives: [
+                    { role: 'AUX', text: "Pesée quotidienne/hebdo selon protocole pour suivre rétention d'eau." },
+                    { role: 'PAB', text: "Surélever les jambes au fauteuil pour diminuer l'œdème." },
+                    { role: 'PAB', text: "Restreindre les liquides si prescription médicale active." },
+                    { role: 'INF', text: "Auscultation pulmonaire si dyspnée (recherche crépitants)." },
+                    { role: 'AUX', text: "Vérifier le signe du godet aux chevilles lors des soins." },
+                    { role: 'PAB', text: "Installer bas support le matin avant le lever si prescrits." },
+                    { role: 'INF', text: "Aviser MD si gain de poids > 2kg en une semaine." },
+                    { role: 'PAB', text: "Favoriser le repos après les repas." },
+                    { role: 'ALL', text: "Surveiller la toux nocturne (orthopnée)." },
+                    { role: 'PAB', text: "Utiliser 2 oreillers pour dormir si difficulté à respirer à plat." },
+                    { role: 'INF', text: "Surveiller effets secondaires diurétiques (étourdissements/TA)." },
+                    { role: 'AUX', text: "Prendre TA et pouls régulièrement." }
+                ]
+            },
+            {
+                id: 'clin_hta', cat: 'clinique', title: 'Hypertension (HTA)',
+                constats: ["TA élevée", "Céphalées", "Étourdissements"],
+                directives: [
+                    { role: 'AUX', text: "Prendre TA selon fréquence ordonnance." },
+                    { role: 'INF', text: "Administrer PRN antihypertenseur si TA > 160/90 (selon protocole)." },
+                    { role: 'ALL', text: "Signaler maux de tête persistants ou troubles vision." },
+                    { role: 'AUX', text: "Reprendre TA après 15 min de repos si élevée." },
+                    { role: 'PAB', text: "Éviter sel ajouté aux repas (diète hyposodée)." },
+                    { role: 'PAB', text: "Favoriser calme et repos si TA élevée." },
+                    { role: 'INF', text: "Surveiller signes AVC (visage, bras, parole)." },
+                    { role: 'AUX', text: "Noter TA au dossier." },
+                    { role: 'PAB', text: "Encourager marche quotidienne si état stable." },
+                    { role: 'INF', text: "Réviser médication si HTA persiste le matin." },
+                    { role: 'AUX', text: "Vérifier si douleur ou rétention urinaire cause HTA." },
+                    { role: 'ALL', text: "Gérer le stress/anxiété du résident." }
+                ]
+            },
+            {
+                id: 'clin_parkinson', cat: 'clinique', title: 'Parkinson',
+                constats: ["Tremblements", "Rigidité", "Freezing", "Dysphagie"],
+                directives: [
+                    { role: 'INF', text: "Donner Lévodopa à heure FIXE PRÉCISE (crucial pour mobilité)." },
+                    { role: 'PAB', text: "Laisser plus de temps pour manger (lenteur/tremblements)." },
+                    { role: 'PAB', text: "Aider au démarrage de la marche (compter 1-2-3) si freezing." },
+                    { role: 'ALL', text: "Surveiller dysphagie aux liquides (toux)." },
+                    { role: 'PAB', text: "Utiliser ustensiles adaptés/lourds si tremblements." },
+                    { role: 'AUX', text: "Surveiller constipation (effet secondaire fréquent)." },
+                    { role: 'PAB', text: "Encourager grands pas lors de la marche." },
+                    { role: 'INF', text: "Surveiller fluctuations état (On/Off) durant la journée." },
+                    { role: 'PAB', text: "Assurer une position assise droite pour éviter chute arrière." },
+                    { role: 'ALL', text: "Parler fort et clair (voix souvent faible)." },
+                    { role: 'PAB', text: "Aider pour boutons/fermetures éclair (motricité fine)." },
+                    { role: 'INF', text: "Vérifier hypotension orthostatique." }
+                ]
+            },
+            {
+                id: 'clin_antico', cat: 'clinique', title: 'Sous Anticoagulant',
+                constats: ["Coumadin/NOAC", "Risque saignement", "Ecchymoses"],
+                directives: [
+                    { role: 'ALL', text: "Surveiller tout saignement (nez, gencives, urine, selles)." },
+                    { role: 'INF', text: "Surveillance neuro accrue q. 4h si chute, même sans impact tête." },
+                    { role: 'AUX', text: "Utiliser rasoir électrique seulement (pas de lames)." },
+                    { role: 'PAB', text: "Manipuler avec douceur lors des soins (peau fragile)." },
+                    { role: 'INF', text: "Vérifier INR selon protocole (si Coumadin)." },
+                    { role: 'ALL', text: "Appliquer pression > 5 min si coupure ou prise de sang." },
+                    { role: 'AUX', text: "Noter apparition nouvelles ecchymoses spontanées." },
+                    { role: 'PAB', text: "Brosse à dents à soies souples seulement." },
+                    { role: 'INF', text: "Aviser MD si selles noires (méléna)." },
+                    { role: 'PAB', text: "Bien hydrater la peau pour éviter déchirures." },
+                    { role: 'ALL', text: "Éviter injections IM si possible." },
+                    { role: 'INF', text: "Réviser interactions médicamenteuses (AINS, Antibiotiques)." }
+                ]
+            },
+            {
+                id: 'clin_douleur', cat: 'clinique', title: 'Douleur Chronique',
+                constats: ["Grimace", "Plaintes", "Repli", "Aggravation SCPD"],
+                directives: [
+                    { role: 'INF', text: "Évaluer douleur (PQRST/PACSLAC) à chaque quart." },
+                    { role: 'PAB', text: "Appliquer chaleur (sac magique tiède) PRN sur zone douloureuse." },
+                    { role: 'PAB', text: "Positionnement de confort avec oreillers supplémentaires." },
+                    { role: 'INF', text: "Analgésie régulière aux heures fixes pour couvrir fond douloureux." },
+                    { role: 'ALL', text: "Offrir distraction (musique, TV) pour diminuer perception douleur." },
+                    { role: 'INF', text: "Donner entredose 45 min avant mobilisation (bain, pansement)." },
+                    { role: 'AUX', text: "Observer efficacité analgésique après 1h." },
+                    { role: 'PAB', text: "Mobiliser doucement en soutenant les articulations." },
+                    { role: 'INF', text: "Surveiller effets secondaires opiacés (constipation, somnolence)." },
+                    { role: 'PAB', text: "Signaler tout changement de comportement (agitation = douleur?)." },
+                    { role: 'ALL', text: "Croire le résident s'il dit avoir mal." },
+                    { role: 'INF', text: "Réévaluer co-analgésie (Lyrica, Tylenol, Crèmes)." }
+                ]
+            },
+            {
+                id: 'clin_mpoc', cat: 'clinique', title: 'MPOC / Dyspnée',
+                constats: ["Toux", "Sat basse", "Essoufflement", "Encombrement"],
+                directives: [
+                    { role: 'PAB', text: "Tête de lit relevée 30-45° en tout temps pour faciliter respiration." },
+                    { role: 'PAB', text: "Aide partielle aux repas pour économiser l'énergie." },
+                    { role: 'INF', text: "Administrer oxygène PRN si Sat < 90% selon ordonnance." },
+                    { role: 'PAB', text: "Encourager respiration lèvres pincées lors de l'effort." },
+                    { role: 'AUX', text: "Prendre saturation (SatO2) si essoufflement accru." },
+                    { role: 'PAB', text: "Ouvrir fenêtre ou utiliser ventilateur pour circulation d'air (si toléré)." },
+                    { role: 'INF', text: "Administrer pompes (inhalateurs) avec chambre d'espacement." },
+                    { role: 'ALL', text: "Éviter parfums forts ou irritants dans la chambre." },
+                    { role: 'AUX', text: "Surveiller couleur des expectorations (jaune/vert = infection?)." },
+                    { role: 'PAB', text: "Planifier les soins le matin (énergie meilleure)." },
+                    { role: 'ALL', text: "Encourager toux efficace pour dégager bronches." },
+                    { role: 'INF', text: "Vérifier anxiété associée à la dyspnée." }
+                ]
+            },
+            {
+                id: 'clin_plaie', cat: 'clinique', title: 'Plaie de Pression',
+                constats: ["Rougeur sacrée", "Phlyctène", "Stade 2", "Immobilité"],
+                directives: [
+                    { role: 'PAB', text: "Tournée positionnement 30° q. 2h au lit pour décharge." },
+                    { role: 'PAB', text: "Placer oreiller sous mollets (talons flottants) en tout temps au lit." },
+                    { role: 'PAB', text: "Éviter cisaillement lors des transferts (utiliser piqué glissant)." },
+                    { role: 'AUX', text: "Appliquer crème barrière (Zinc) si incontinence." },
+                    { role: 'AUX', text: "Soin de plaie selon ordonnance et protocole établissement." },
+                    { role: 'INF', text: "Mesurer plaie hebdo et noter au dossier." },
+                    { role: 'PAB', text: "Ne pas masser les zones rougies (aggrave dommage)." },
+                    { role: 'PAB', text: "Limiter temps assis fauteuil à 2h consécutives." },
+                    { role: 'ALL', text: "Assurer apport protéique (suppléments) pour guérison." },
+                    { role: 'AUX', text: "Vérifier état cutané quotidien à la toilette." },
+                    { role: 'PAB', text: "Vérifier bon gonflage matelas thérapeutique." },
+                    { role: 'INF', text: "Considérer une consultation en soins de plaies si aucune amélioration après 2 semaines." }
+                ]
+            },
+
+            // --- HABITUDES DE VIE ---
+            {
+                id: 'h_dysphagie', cat: 'hdevie', title: 'Dysphagie / Risque Étouffement',
+                constats: ["Tousse", "Garde aliments", "Voix rauque", "Larmoiement"],
+                directives: [
+                    { role: 'PAB', text: "Positionner à 90° pour repas et garder 30 min après." },
+                    { role: 'ALL', text: "Respecter strictement les textures prescrites (Purée/Haché) et les liquides (Nectar/Miel)." },
+                    { role: 'PAB', text: "Faire soin de bouche après repas pour vider poches." },
+                    { role: 'PAB', text: "Rappeler 'Chin tuck' (menton baissé) à chaque bouchée." },
+                    { role: 'PAB', text: "Ne pas mélanger solides et liquides." },
+                    { role: 'PAB', text: "Petites bouchées, ne jamais presser le résident." },
+                    { role: 'AUX', text: "Surveiller température (pneumonie aspiration?)." },
+                    { role: 'ALL', text: "Pas de paille." },
+                    { role: 'PAB', text: "S'assurer que le résident est bien éveillé." },
+                    { role: 'ALL', text: "Heimlich si étouffement complet (silence)." },
+                    { role: 'PAB', text: "Couper aliments petits morceaux." },
+                    { role: 'INF', text: "Réévaluer avec nutritionniste si perte poids." }
+                ]
+            },
+            {
+                id: 'h_constip', cat: 'hdevie', title: 'Constipation',
+                constats: ["Pas selle > 3j", "Efforts", "Ventre dur", "Nausées"],
+                directives: [
+                    { role: 'AUX', text: "Noter selles (L.S.) au dossier quotidiennement." },
+                    { role: 'PAB', text: "Offrir jus pruneaux/eau fraîche à volonté." },
+                    { role: 'PAB', text: "Encourager marche pour stimuler intestins." },
+                    { role: 'INF', text: "Toucher rectal si 0 selle > 3 jours (fécalome?)." },
+                    { role: 'INF', text: "Protocole laxatif selon ordonnance." },
+                    { role: 'PAB', text: "Répondre vite à l'appel pour toilette." },
+                    { role: 'PAB', text: "Position assise physiologique (pieds surélevés)." },
+                    { role: 'AUX', text: "Surveiller vomissements (occlusion?)." },
+                    { role: 'PAB', text: "Ajouter fibres (son) au déjeuner si prescrit." },
+                    { role: 'PAB', text: "Massage abdominal sens aiguilles montre." },
+                    { role: 'INF', text: "Évaluer efficacité laxatif le lendemain." },
+                    { role: 'ALL', text: "Assurer intimité lors défécation." }
+                ]
+            },
+            {
+                id: 'h_denut', cat: 'hdevie', title: 'Dénutrition',
+                constats: ["Perte poids", "Mange peu", "Refus", "BMI < 21"],
+                directives: [
+                    { role: 'PAB', text: "Aide/Stimulation verbale aux repas." },
+                    { role: 'PAB', text: "Offrir suppléments (Ensure/Pudding) à la collation." },
+                    { role: 'PAB', text: "Enrichir aliments (crème, sucre) si permis." },
+                    { role: 'AUX', text: "Pesée hebdomadaire pour suivi." },
+                    { role: 'PAB', text: "Laisser collations accessibles au chevet." },
+                    { role: 'ALL', text: "Créer ambiance agréable aux repas." },
+                    { role: 'INF', text: "Vérifier état buccal (dentier, muguet) nuisant." },
+                    { role: 'PAB', text: "Offrir choix de menu si possible." },
+                    { role: 'ALL', text: "Encourager famille à apporter mets préférés." },
+                    { role: 'PAB', text: "Noter % ingesta sur feuille surveillance." },
+                    { role: 'AUX', text: "Donner médication stimulant appétit si prescrit." },
+                    { role: 'INF', text: "Réviser bilan sanguin (albumine)." }
+                ]
+            },
+            {
+                id: 'h_incont', cat: 'hdevie', title: 'Incontinence / DAS',
+                constats: ["Fuites", "Rougeur aine", "Dermatite", "Odeur"],
+                directives: [
+                    { role: 'PAB', text: "Changer protection dès que souillée pour garder peau sèche." },
+                    { role: 'PAB', text: "Toilette intime eau + savon doux (ne pas frotter fort)." },
+                    { role: 'AUX', text: "Appliquer crème barrière zinc si rougeur." },
+                    { role: 'PAB', text: "Pas de couche la nuit si possible (alèse) pour aérer." },
+                    { role: 'PAB', text: "Horaire mictionnel q. 2h pour prévenir fuites." },
+                    { role: 'INF', text: "Évaluer type incontinence (effort, urgence, trop plein)." },
+                    { role: 'PAB', text: "Utiliser produits adaptés absorption." },
+                    { role: 'AUX', text: "Surveiller mycose (rougeur vive + points)." },
+                    { role: 'ALL', text: "Préserver dignité résident." },
+                    { role: 'PAB', text: "Bien sécher les plis inguinaux." },
+                    { role: 'INF', text: "Vérifier si infection urinaire cause incontinence." },
+                    { role: 'PAB', text: "Vider sac sonde urinaire si présente." }
+                ]
+            },
+            {
+                id: 'h_bouche', cat: 'hdevie', title: 'Hygiène Buccale',
+                constats: ["Muguet", "Prothèses sales", "Mauvaise haleine", "Douleur"],
+                directives: [
+                    { role: 'PAB', text: "Brossage dents/prothèses BID (matin/soir)." },
+                    { role: 'PAB', text: "Enlever prothèses la nuit (trempage)." },
+                    { role: 'INF', text: "Traiter Nystatin si muguet visible." },
+                    { role: 'PAB', text: "Hydrater lèvres (Vaseline/Baume)." },
+                    { role: 'PAB', text: "Rincer bouche après pompes corticoïdes." },
+                    { role: 'AUX', text: "Inspecter bouche pour plaies/lésions." },
+                    { role: 'PAB', text: "Utiliser éponge ou brosse souple si gencives sensibles." },
+                    { role: 'INF', text: "Traiter douleur buccale avant repas." },
+                    { role: 'ALL', text: "S'assurer prothèses bien identifiées." },
+                    { role: 'PAB', text: "Nettoyer palais et langue." },
+                    { role: 'AUX', text: "Aviser si prothèse brisée ou mal ajustée." },
+                    { role: 'ALL', text: "Hydratation fréquente pour xérostomie." }
+                ]
+            },
+
+            // --- INFECTION ---
+            {
+                id: 'inf_itu', cat: 'infection', title: 'Infection Urinaire',
+                constats: ["Odeur", "Confusion", "Fièvre", "Hématurie"],
+                directives: [
+                    { role: 'INF', text: "Faire tigette urinaire STAT si sx présents." },
+                    { role: 'PAB', text: "Hygiène périnéale stricte (avant -> arrière)." },
+                    { role: 'PAB', text: "Hydratation ++ (eau/jus) pour rincer vessie." },
+                    { role: 'AUX', text: "Température q. 4h." },
+                    { role: 'PAB', text: "Changer couche souillée immédiatement." },
+                    { role: 'INF', text: "Surveiller délirium associé." },
+                    { role: 'INF', text: "Administrer antibiotiques selon horaire." },
+                    { role: 'AUX', text: "Noter aspect urines." },
+                    { role: 'PAB', text: "Jus canneberge si prescrit." },
+                    { role: 'INF', text: "Vérifier globe vésical." },
+                    { role: 'ALL', text: "Lavage mains avant/après soins." },
+                    { role: 'INF', text: "Retrait sonde si plus nécessaire." }
+                ]
+            },
+            {
+                id: 'inf_mrsa', cat: 'infection', title: 'BMR (SARM/ERV)',
+                constats: ["Porteur connu", "Plaie infectée", "Isolement"],
+                directives: [
+                    { role: 'ALL', text: "Précautions CONTACT (Gants/Blouse) soins directs." },
+                    { role: 'ALL', text: "Lavage mains rigoureux avant/après." },
+                    { role: 'PAB', text: "Désinfection équipement dédié (thermomètre, marchette)." },
+                    { role: 'PAB', text: "Ne pas entrer chariot lingerie dans chambre." },
+                    { role: 'INF', text: "Couvrir plaies infectées lors déplacements." },
+                    { role: 'ALL', text: "Aviser visiteurs des mesures à suivre." },
+                    { role: 'AUX', text: "Surveiller signes infection locale." },
+                    { role: 'PAB', text: "Chambre individuelle ou cohorte." },
+                    { role: 'ALL', text: "Identifier dossier/chambre discrètement." },
+                    { role: 'PAB', text: "Vaisselle régulière (lave-vaisselle suffit)." },
+                    { role: 'PAB', text: "Linges souillés dans sac soluble si requis." },
+                    { role: 'INF', text: "Dépistage contrôle selon protocole PCI." }
+                ]
+            },
+            {
+                id: 'inf_cdiff', cat: 'infection', title: 'C. Difficile / Gastro',
+                constats: ["Diarrhée", "Odeur forte", "Fièvre"],
+                directives: [
+                    { role: 'ALL', text: "Précautions CONTACT PLUS (Gants/Blouse)." },
+                    { role: 'ALL', text: "Lavage mains EAU + SAVON OBLIGATOIRE (Pas gel)." },
+                    { role: 'PAB', text: "Désinfection sporicide (Javel) chambre." },
+                    { role: 'INF', text: "Isolement chambre porte fermée." },
+                    { role: 'AUX', text: "Noter fréquence/consistance selles." },
+                    { role: 'PAB', text: "Hygiène stricte après chaque selle." },
+                    { role: 'INF', text: "Hydratation IV/SC si déshydratation." },
+                    { role: 'PAB', text: "Équipement dédié à la chambre." },
+                    { role: 'ALL', text: "Pas de visiteurs si possible." },
+                    { role: 'PAB', text: "Changer vêtements si souillés immédiatement." },
+                    { role: 'INF', text: "Envoyer culture selles STAT." },
+                    { role: 'AUX', text: "Surveiller signes vitaux q. 4h." }
+                ]
+            },
+
+            // --- PALLIATIF ---
+            {
+                id: 'pall_fin', cat: 'palliatif', title: 'Fin de Vie / Agonie',
+                constats: ["Râles", "Marbrures", "Inconscience", "Apnée"],
+                directives: [
+                    { role: 'INF', text: "Protocole détresse (Morphine/Scopo) PRN pour confort." },
+                    { role: 'PAB', text: "Soins bouche éponges humides q. 1h." },
+                    { role: 'PAB', text: "Tourner délicatement confort seulement (pas 2h strict)." },
+                    { role: 'ALL', text: "Soutien famille (eau, café, écoute)." },
+                    { role: 'INF', text: "Cesser signes vitaux et gluco." },
+                    { role: 'AUX', text: "Vérifier rétention urinaire (globe)." },
+                    { role: 'ALL', text: "Ambiance calme, lumière tamisée." },
+                    { role: 'PAB', text: "Hydrater yeux (larmes artif.) si ouverts." },
+                    { role: 'PAB', text: "Changer jaquette si transpiration (fièvre)." },
+                    { role: 'ALL', text: "Parler au résident (ouïe persiste)." },
+                    { role: 'INF', text: "Aviser MD/Famille changements." },
+                    { role: 'INF', text: "S'assurer ordonnances décès au dossier." }
+                ]
+            }
+        ];
+
+        let currentPTI = {};
+        let currentTab = 'coach';
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderLibrary('all');
+        });
+
+        // --- RENDER LIBRARY ---
+        function renderLibrary(filter, btn) {
+            if(btn) {
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.classList.remove('bg-slate-800', 'text-white');
+                    b.classList.add('bg-white', 'text-slate-600', 'border');
+                });
+                btn.classList.remove('bg-white', 'text-slate-600', 'border');
+                btn.classList.add('bg-slate-800', 'text-white');
+            }
+
+            const container = document.getElementById('library-container');
+            container.innerHTML = '';
+            
+            const filtered = filter === 'all' ? database : database.filter(i => i.cat === filter);
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-3 rounded shadow-sm border border-slate-200 hover:shadow-md transition-shadow h-full flex flex-col";
+                
+                let directivesList = item.directives.map((d, idx) => `
+                    <li class="directive-item flex items-start p-2 cursor-pointer border-b border-slate-50 last:border-0 rounded group" 
+                        onclick="addDirective('${item.title}', '${d.text.replace(/'/g, "\\'")}', '${d.role}')">
+                        <span class="role-badge role-${d.role.toLowerCase()} mt-0.5 flex-none">${d.role}</span>
+                        <span class="text-xs text-slate-600 leading-tight group-hover:text-teal-700">${d.text}</span>
+                        <i class="fa-solid fa-plus text-teal-400 ml-auto text-xs opacity-0 group-hover:opacity-100 pl-2"></i>
+                    </li>
+                `).join('');
+
+                card.innerHTML = `
+                    <div class="mb-2 pb-2 border-b border-slate-100">
+                        <span class="text-[9px] font-bold uppercase text-slate-400 border border-slate-100 px-1.5 py-0.5 rounded bg-slate-50 tracking-wide">${item.cat}</span>
+                        <h3 class="font-bold text-slate-800 mt-1 text-sm">${item.title}</h3>
+                        <p class="text-[10px] text-slate-400 mt-1 truncate italic">Ex: ${item.constats.slice(0, 3).join(', ')}...</p>
+                    </div>
+                    <ul class="flex-1 overflow-y-auto max-h-56 space-y-0.5 scrollbar-thin">${directivesList}</ul>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // --- PTI LOGIC ---
+        function addDirective(problem, text, role) {
+            if (!currentPTI[problem]) currentPTI[problem] = [];
+            if (currentPTI[problem].some(d => d.text === text)) return;
+            currentPTI[problem].push({ text, role });
+            updateSidebar();
+            
+            const badge = document.getElementById('pti-badge');
+            badge.classList.remove('hidden');
+            badge.classList.add('animate-bounce');
+            setTimeout(() => badge.classList.remove('animate-bounce'), 1000);
+        }
+
+        function removeDirective(problem, index) {
+            currentPTI[problem].splice(index, 1);
+            if (currentPTI[problem].length === 0) delete currentPTI[problem];
+            updateSidebar();
+        }
+
+        function updateSidebar() {
+            const tbody = document.getElementById('pti-table-body');
+            const visualTable = document.getElementById('pti-visual-table');
+            const emptyState = document.getElementById('empty-state');
+            const badge = document.getElementById('pti-badge');
+
+            tbody.innerHTML = '';
+            const problems = Object.keys(currentPTI);
+            
+            let totalDirs = 0;
+            problems.forEach(p => totalDirs += currentPTI[p].length);
+            badge.innerText = totalDirs;
+            badge.classList.toggle('hidden', totalDirs === 0);
+
+            if (problems.length === 0) {
+                visualTable.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            visualTable.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            problems.forEach(prob => {
+                const directives = currentPTI[prob];
+                const tr = document.createElement('tr');
+                const dirHtml = directives.map((d, i) => `
+                    <div class="flex justify-between items-start mb-1 group hover:bg-slate-50 p-1 rounded border-b border-dashed border-slate-100 last:border-0">
+                        <div class="text-xs">
+                            <span class="role-badge role-${d.role.toLowerCase()} text-[9px] mr-1 scale-90 origin-left">[${d.role}]</span> 
+                            <span class="text-slate-700">${d.text}</span>
+                        </div>
+                        <button onclick="removeDirective('${prob}', ${i})" class="text-slate-300 hover:text-red-500 ml-2 no-print p-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `).join('');
+                tr.innerHTML = `<td class="font-bold text-slate-700 bg-slate-50 text-xs align-top border-r border-slate-200">${prob}</td><td class="align-top">${dirHtml}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- PRINTING LOGIC ---
+        function printView(mode) {
+            const printArea = document.getElementById('print-area');
+            const problems = Object.keys(currentPTI);
+            if (problems.length === 0) return alert("Le panier PTI est vide.");
+            let content = '';
+
+            if (mode === 'pti') {
+                content = `
+                    <div style="font-family: sans-serif; color: #000;">
+                        <div style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+                            <h1 style="font-size: 16pt; font-weight: bold; margin: 0;">PLAN THÉRAPEUTIQUE INFIRMIER (PTI)</h1>
+                            <p style="margin: 5px 0 0 0; font-size: 10pt;">Soins de Longue Durée</p>
+                            <div style="margin-top:10px; font-size: 10pt;">Date: .............................. Heure: ............</div>
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
+                            <thead><tr style="background: #f0f0f0;"><th style="border: 1px solid #000; padding: 8px; text-align: left; width: 30%;">CONSTATS</th><th style="border: 1px solid #000; padding: 8px; text-align: left; width: 70%;">DIRECTIVES</th></tr></thead>
+                            <tbody>
+                                ${problems.map(prob => `
+                                    <tr>
+                                        <td style="border: 1px solid #000; padding: 8px; vertical-align: top;"><strong>${prob}</strong></td>
+                                        <td style="border: 1px solid #000; padding: 8px; vertical-align: top;">
+                                            <ul style="margin: 0; padding-left: 20px; list-style-type: square;">
+                                                ${currentPTI[prob].map(d => `<li style="margin-bottom: 4px;">${d.text} <span style="font-size:8pt; font-weight:bold;">[${d.role}]</span></li>`).join('')}
+                                            </ul>
+                                        </td>
+                                    </tr>`).join('')}
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 40px; font-size: 10pt; border-top:1px solid #000; padding-top:10px;"><p>Signature infirmière: ............................................................................ Permis: ...................</p></div>
+                    </div>`;
+            } else if (mode === 'plan') {
+                let allDir = [];
+                problems.forEach(p => { currentPTI[p].forEach(d => allDir.push({ prob: p, ...d })); });
+                const roles = [{code: 'PAB', title: 'PRÉPOSÉ(E) AUX BÉNÉFICIAIRES'}, {code: 'AUX', title: 'INFIRMIÈRE AUXILIAIRE'}, {code: 'INF', title: 'INFIRMIÈRE'}];
+                content = `<div style="font-family: sans-serif; color: #000;"><div style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;"><h1 style="font-size: 16pt; font-weight: bold; margin: 0;">PLAN DE TRAVAIL</h1><p style="margin: 0; font-size: 10pt;">Tâches par titre d'emploi</p></div>`;
+                roles.forEach(roleObj => {
+                    const tasks = allDir.filter(d => d.role === roleObj.code || d.role === 'ALL');
+                    if (tasks.length > 0) {
+                        content += `<div style="margin-bottom: 20px; border: 2px solid #000; page-break-inside: avoid;"><h3 style="margin: 0; background: #e0e0e0; padding: 8px; font-size: 12pt; border-bottom: 1px solid #000; font-weight:bold;">${roleObj.title}</h3><table style="width: 100%; border-collapse: collapse; font-size: 10pt;">${tasks.map(t => `<tr><td style="border-bottom: 1px solid #ccc; padding: 6px; width: 25%; font-weight:bold; background:#f9f9f9;">${t.prob}</td><td style="border-bottom: 1px solid #ccc; padding: 6px;">${t.text}</td></tr>`).join('')}</table></div>`;
+                    }
+                });
+                content += `</div>`;
+            }
+            printArea.innerHTML = content;
+            window.print();
+        }
+
+        // --- AI LOGIC (CALLS) ---
+        async function callGemini(prompt, system) {
+            const key = getApiKey();
+            if (!key) return "Clé API manquante.";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`;
+            const payload = { contents: [{ parts: [{ text: prompt }] }], systemInstruction: { parts: [{ text: system }] } };
+            try {
+                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if(!res.ok) throw new Error("API Error");
+                const data = await res.json();
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Erreur de réponse.";
+            } catch (e) {
+                return "Erreur de connexion avec l'IA. Vérifiez votre clé ou connexion.";
+            }
+        }
+
+        // --- UI HELPERS ---
+        function toggleSidebar() {
+            const sb = document.getElementById('pti-sidebar');
+            const ov = document.getElementById('overlay');
+            if (sb.classList.contains('translate-x-full')) {
+                sb.classList.remove('translate-x-full');
+                ov.classList.remove('hidden');
+                setTimeout(() => ov.classList.remove('opacity-0'), 10);
+            } else {
+                sb.classList.add('translate-x-full');
+                ov.classList.add('opacity-0');
+                setTimeout(() => ov.classList.add('hidden'), 300);
+            }
+        }
+        
+        function openAIModal(mode) {
+            const modal = document.getElementById('ai-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            // If opening from Coach button, default to coach. If from sidebar, stay in result view or default to something?
+            if (mode === 'coach') switchTab('coach');
+            // 'manual' logic handled by switchTab
+        }
+        
+        function closeAIModal() {
+            const modal = document.getElementById('ai-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function switchTab(mode) {
+            currentTab = mode;
+            const btnCoach = document.getElementById('tab-coach');
+            const btnManual = document.getElementById('tab-manual');
+            const chatInput = document.getElementById('ai-input-container');
+            const manualInput = document.getElementById('manual-input-section');
+            const footer = document.getElementById('ai-note-footer');
+            const output = document.getElementById('ai-output');
+
+            // Reset classes
+            btnCoach.className = "flex-1 py-3 text-sm font-medium transition-colors inactive-tab";
+            btnManual.className = "flex-1 py-3 text-sm font-medium transition-colors inactive-tab";
+
+            if (mode === 'coach') {
+                btnCoach.className = "flex-1 py-3 text-sm font-medium transition-colors active-tab";
+                chatInput.classList.remove('hidden');
+                manualInput.classList.add('hidden');
+                footer.classList.add('hidden');
+                // Don't clear output if it has content, but maybe show welcome msg if empty
+                if (output.innerHTML === "") output.innerHTML = '<div class="text-center text-slate-400 mt-20"><i class="fa-solid fa-user-nurse text-4xl mb-3 text-indigo-200"></i><p>Posez une question sur une procédure ou un médicament.</p></div>';
+            } else if (mode === 'manual') {
+                btnManual.className = "flex-1 py-3 text-sm font-medium transition-colors active-tab";
+                chatInput.classList.add('hidden');
+                manualInput.classList.remove('hidden'); // Show Manual Input
+                footer.classList.remove('hidden');
+                if (output.innerHTML === "" || output.innerHTML.includes("Posez une question")) output.innerHTML = '<div class="text-center text-slate-400 mt-10"><p>Rédigez la situation ci-dessus et cliquez sur générer.</p></div>';
+            } else if (mode === 'pti-result') {
+                // Special mode for PTI generation results (no specific tab active or reuse manual tab style without input)
+                // For simplicity, let's look like the manual tab but hide the input area so the user sees just the result
+                btnManual.className = "flex-1 py-3 text-sm font-medium transition-colors active-tab"; // Highlight Note tab
+                chatInput.classList.add('hidden');
+                manualInput.classList.add('hidden'); // Hide manual input
+                footer.classList.remove('hidden');
+            }
+        }
+
+        // --- GENERATION FUNCTIONS ---
+
+        // 1. CHAT COACH
+        async function sendChat() {
+            const input = document.getElementById('ai-input');
+            const q = input.value;
+            if(!q) return;
+            const out = document.getElementById('ai-output');
+            out.innerHTML += `<div class="mb-3 text-right"><span class="bg-indigo-100 text-indigo-800 py-2 px-3 rounded-lg inline-block text-xs font-medium">${q}</span></div>`;
+            out.innerHTML += `<div class="mb-3 loading-indicator"><span class="typing-dot"></span></div>`;
+            out.scrollTop = out.scrollHeight;
+            input.value = "";
+            const system = "Tu es un expert clinique en soins de longue durée au Québec. Réponses concises, normes OIIQ.";
+            const response = await callGemini(q, system);
+            document.querySelector('.loading-indicator').remove();
+            out.innerHTML += `<div class="mb-5 text-slate-800 bg-slate-50 p-4 rounded-lg border border-slate-100 shadow-sm prose prose-sm max-w-none">${marked.parse(response)}</div>`;
+            out.scrollTop = out.scrollHeight;
+        }
+
+        // 2. NOTE PTI (FROM BASKET)
+        async function generatePTINote() {
+            const problems = Object.keys(currentPTI);
+            if(problems.length === 0) return alert("Veuillez d'abord ajouter des éléments au PTI.");
+
+            openAIModal(); // Open Modal
+            switchTab('pti-result'); // Switch to result view (hides manual input)
+
+            document.getElementById('ai-output').innerHTML = '<div class="text-center mt-20"><div class="flex justify-center mb-2"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div><span class="text-xs text-slate-400 font-medium">L\'IA analyse le PTI...</span></div>';
+
+            let context = "";
+            problems.forEach(p => {
+                context += `PROBLÈME: ${p}\n`;
+                currentPTI[p].forEach(d => context += `- ${d.text}\n`);
+            });
+
+            const prompt = `Voici les constats et interventions PTI :\n${context}\n\nRédige une note d'évolution narrative TRÈS CONCISE (style télégraphique amélioré). \n\nCONSIGNES:\n1. Max 3-4 phrases. Droit au but.\n2. Résume les interventions.\n3. Pas de date/heure/signature.\n4. Vocabulaire infirmier Québec.`;
+            const system = "Tu es une infirmière expérimentée en CHSLD.";
+            
+            const response = await callGemini(prompt, system);
+            document.getElementById('ai-output').innerHTML = `<div class="prose prose-sm max-w-none text-slate-700">${marked.parse(response)}</div>`;
+        }
+
+        // 3. NOTE MANUELLE (FROM TEXTAREA)
+        async function generateManualNote() {
+            const text = document.getElementById('manual-text').value;
+            if(!text) return alert("Veuillez décrire la situation.");
+
+            const out = document.getElementById('ai-output');
+            out.innerHTML = '<div class="text-center mt-10"><div class="flex justify-center mb-2"><span class="typing-dot"></span></div><span class="text-xs text-slate-400 font-medium">Rédaction en cours...</span></div>';
+
+            const prompt = `Voici une situation décrite en vrac :\n"${text}"\n\nRédige une note d'évolution professionnelle et CONCISE pour le dossier (style infirmier).\n\nCONSIGNES:\n1. Structure les faits.\n2. Enlève le superflu.\n3. Utilise le vocabulaire médical approprié.\n4. Max 4-5 lignes.`;
+            const system = "Tu es une infirmière experte en documentation clinique. Tu reformules les notes brouillons en notes professionnelles.";
+
+            const response = await callGemini(prompt, system);
+            out.innerHTML = `<div class="bg-teal-50 p-4 rounded-lg border border-teal-100 text-slate-800 prose prose-sm max-w-none">${marked.parse(response)}</div>`;
+        }
+
+        function copyNote() {
+            const text = document.getElementById('ai-output').innerText;
+            navigator.clipboard.writeText(text);
+            const btn = document.querySelector('#ai-note-footer button');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Copié!';
+            btn.classList.add('bg-green-600');
+            setTimeout(() => { btn.innerHTML = originalHTML; btn.classList.remove('bg-green-600'); }, 2000);
+        }
+        function filterLib(cat, btn) { renderLibrary(cat, btn); }
+    </script>
+</body>
+</html>

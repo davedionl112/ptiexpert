@@ -248,21 +248,6 @@
 
     <!-- LOGIQUE DE L'APPLICATION -->
     <script>
-        const YOUR_HARDCODED_KEY = "AIzaSyBwW2cqKeSIxTREdZlAjo7o4J25NboztdI"; 
-
-        // Gestion automatique de la clé
-        function getApiKey() {
-            if (YOUR_HARDCODED_KEY && YOUR_HARDCODED_KEY.length > 10) return YOUR_HARDCODED_KEY;
-            let storedKey = localStorage.getItem('gemini_api_key');
-            if (storedKey) return storedKey;
-            const key = prompt("Pour utiliser l'IA, entrez votre clé API Google Gemini :");
-            if (key) {
-                localStorage.setItem('gemini_api_key', key.trim());
-                return key.trim();
-            }
-            return "";
-        }
-
         // --- FALLBACK DATA (Pour quand le fichier Excel est introuvable) ---
         const fallbackDatabase = [
             {
@@ -283,7 +268,6 @@
                     { role: 'AUX', text: "Vérifier le bon fonctionnement de l'alarme de lit." }
                 ]
             },
-            // ... (J'ai mis un set réduit pour le fallback pour ne pas surcharger le code, mais suffisant pour tester) ...
              {
                 id: 'clin_douleur', cat: 'clinique', title: 'Douleur Chronique',
                 constats: ["Grimace", "Plaintes"],
@@ -522,19 +506,35 @@
             window.print();
         }
 
-        // --- AI LOGIC (CALLS) ---
+        // --- APPEL SERVERLESS VERS NETLIFY (SÉCURISÉ) ---
+        // Cette fonction envoie la demande à ton backend Netlify.
+        // Aucune clé API n'est visible ici, c'est le serveur qui s'en occupe.
         async function callGemini(prompt, system) {
-            const key = getApiKey();
-            if (!key) return "Clé API manquante.";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`;
-            const payload = { contents: [{ parts: [{ text: prompt }] }], systemInstruction: { parts: [{ text: system }] } };
             try {
-                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                if(!res.ok) throw new Error("API Error");
-                const data = await res.json();
-                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Erreur de réponse.";
+                // On appelle la fonction "gemini" qui est hébergée sur ton site
+                const response = await fetch('/.netlify/functions/gemini', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        prompt: prompt, 
+                        system: system 
+                    })
+                });
+
+                // Si le serveur Netlify renvoie une erreur (ex: clé manquante)
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || "Erreur serveur (500)");
+                }
+
+                const data = await response.json();
+                
+                // On retourne la réponse textuelle de l'IA
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "L'IA a répondu, mais le format est inattendu.";
+
             } catch (e) {
-                return "Erreur de connexion avec l'IA. Vérifiez votre clé ou connexion.";
+                console.error("Erreur technique:", e);
+                return "Erreur de connexion avec l'Assistant. Vérifiez que la variable GEMINI_API_KEY est bien configurée dans Netlify.";
             }
         }
 
