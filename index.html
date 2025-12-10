@@ -96,7 +96,7 @@
             <div class="bg-teal-600 p-1.5 rounded"><i class="fa-solid fa-notes-medical text-white text-lg"></i></div>
             <div>
                 <h1 class="text-base font-bold leading-tight">PTI EXPERT <span class="text-teal-400">LONGUE DURÉE</span></h1>
-                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v2.1 Hybride)</span></p>
+                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v2.2 Hybride)</span></p>
             </div>
         </div>
         <div class="flex items-center gap-3">
@@ -572,11 +572,11 @@
                 if (serverResponse.ok) {
                     const data = await serverResponse.json();
                     return data.candidates?.[0]?.content?.parts?.[0]?.text || "Pas de réponse (Serveur).";
-                } else if (serverResponse.status === 404) {
-                    console.warn("Fonction Netlify introuvable (404). Passage en mode Local/GitHub.");
+                } else if (serverResponse.status === 404 || serverResponse.status === 405) {
+                    console.warn("Fonction Netlify introuvable ou non permise (404/405). Passage en mode Local/GitHub.");
                     // On continue vers l'étape 2 (Fallback)
                 } else {
-                    // Erreur serveur autre que 404 (ex: 500)
+                    // Erreur serveur autre que 404/405 (ex: 500)
                     const errText = await serverResponse.text();
                     console.error("Erreur Serveur:", errText);
                     return `Erreur Serveur Netlify: ${serverResponse.status}`;
