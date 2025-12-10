@@ -82,6 +82,10 @@
 
         .active-tab { border-bottom: 2px solid #0d9488; color: #0f766e; font-weight: bold; background: #f0fdfa; }
         .inactive-tab { color: #64748b; background: #f8fafc; }
+        
+        /* Modal Settings Animation */
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: opacity 0.3s, transform 0.3s; }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden bg-slate-50">
@@ -96,6 +100,9 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
+            <button onclick="openSettings()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white p-2 rounded transition-colors" title="Paramètres API (Mode Test/GitHub)">
+                <i class="fa-solid fa-gear text-lg"></i>
+            </button>
             <button onclick="openAIModal('coach')" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded font-bold transition-colors flex items-center gap-2 border border-indigo-400 shadow-sm">
                 <i class="fa-solid fa-user-doctor"></i> Coach Clinique
             </button>
@@ -199,7 +206,7 @@
     </div>
 
     <!-- Overlay -->
-    <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden backdrop-blur-sm transition-opacity"></div>
+    <div id="overlay" onclick="closeAllModals()" class="fixed inset-0 bg-black/50 z-30 hidden backdrop-blur-sm transition-opacity"></div>
 
     <!-- AI Modal -->
     <div id="ai-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
@@ -243,12 +250,32 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeSettings()"></div>
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md p-6 relative z-10">
+            <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fa-solid fa-screwdriver-wrench text-teal-600 mr-2"></i>Mode GitHub / Test</h3>
+            <p class="text-sm text-slate-600 mb-4">
+                Sur <strong>Netlify</strong>, la connexion est automatique.<br>
+                Sur <strong>GitHub/Local</strong>, vous devez entrer la clé temporairement.
+            </p>
+            
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Clé API Gemini (Optionnelle sur Netlify)</label>
+            <input type="password" id="api-key-input" class="w-full border border-slate-300 rounded p-2 text-sm mb-4 focus:ring-2 focus:ring-teal-500 focus:outline-none" placeholder="Collez votre clé ici (AIza...)">
+            
+            <div class="flex justify-end gap-2">
+                <button onclick="closeSettings()" class="text-slate-500 hover:text-slate-700 text-sm font-bold px-4 py-2">Fermer</button>
+                <button onclick="saveApiKey()" class="bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold px-4 py-2 rounded shadow-sm">Sauvegarder</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Hidden Print Area -->
     <div id="print-area"></div>
 
     <!-- LOGIQUE DE L'APPLICATION -->
     <script>
-        // --- FALLBACK DATA (Pour quand le fichier Excel est introuvable) ---
+        // --- FALLBACK DATA ---
         const fallbackDatabase = [
             {
                 id: 'scpd_resist', cat: 'scpd', title: 'Résistance aux Soins / Hygiène',
@@ -279,12 +306,20 @@
         ];
 
         // --- EXCEL LOADING LOGIC ---
-        let database = []; // Will be populated from Excel or Fallback
+        let database = []; 
         let currentPTI = {};
         let currentTab = 'coach';
+        
+        // --- API CONFIGURATION ---
+        const envApiKey = ""; // Laisser vide. Sera rempli automatiquement dans l'environnement de preview.
 
         document.addEventListener('DOMContentLoaded', () => {
             loadDatabase();
+            // Check if key exists in local storage to update UI if needed
+            const storedKey = localStorage.getItem('gemini_api_key');
+            if(storedKey) {
+                document.getElementById('api-key-input').value = storedKey;
+            }
         });
 
         async function loadDatabase() {
@@ -292,12 +327,8 @@
             const statusDot = document.getElementById('status-dot');
             
             try {
-                // Try to fetch the Excel file
                 const response = await fetch('banque_pti.xlsx');
-                
-                if (!response.ok) {
-                    throw new Error("Fichier non trouvé");
-                }
+                if (!response.ok) throw new Error("Fichier non trouvé");
 
                 const arrayBuffer = await response.arrayBuffer();
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
@@ -306,7 +337,6 @@
                 const rawData = XLSX.utils.sheet_to_json(worksheet);
                 
                 const tempMap = {};
-                
                 rawData.forEach(row => {
                     if(!row['ID_UNIQUE'] || !row['DIRECTIVE']) return;
                     const id = row['ID_UNIQUE'];
@@ -324,29 +354,21 @@
                         text: row['DIRECTIVE']
                     });
                 });
-
                 database = Object.values(tempMap);
                 
-                // Success UI
                 statusDot.classList.remove('bg-yellow-400', 'animate-pulse');
                 statusDot.classList.add('bg-green-500');
                 statusText.innerText = "Base de données Excel chargée.";
                 statusText.classList.add('text-green-600');
-                
                 renderLibrary('all');
 
             } catch (error) {
                 console.log("Mode Fallback activé:", error);
-                
-                // FALLBACK MODE
-                database = fallbackDatabase; // Load the JS backup
-                
-                // Update UI to warn user
+                database = fallbackDatabase; 
                 statusDot.classList.remove('bg-yellow-400', 'animate-pulse');
                 statusDot.classList.add('bg-orange-500');
-                statusText.innerText = "Mode Défaut (Fichier Excel 'banque_pti.xlsx' absent)";
+                statusText.innerText = "Mode Défaut (Fichier Excel absent)";
                 statusText.classList.add('text-orange-600');
-                
                 renderLibrary('all');
             }
         }
@@ -366,14 +388,11 @@
 
             const container = document.getElementById('library-container');
             container.innerHTML = '';
-            
             const filtered = filter === 'all' ? database : database.filter(i => i.cat === filter);
 
             filtered.forEach(item => {
                 const card = document.createElement('div');
                 card.className = "bg-white p-3 rounded shadow-sm border border-slate-200 hover:shadow-md transition-shadow h-full flex flex-col";
-                
-                // Truncate constats for display
                 const constatsDisplay = item.constats.length > 0 ? item.constats.slice(0, 3).join(', ') + (item.constats.length > 3 ? '...' : '') : 'Aucun constat';
 
                 let directivesList = item.directives.map((d, idx) => `
@@ -424,7 +443,6 @@
 
             tbody.innerHTML = '';
             const problems = Object.keys(currentPTI);
-            
             let totalDirs = 0;
             problems.forEach(p => totalDirs += currentPTI[p].length);
             badge.innerText = totalDirs;
@@ -506,35 +524,107 @@
             window.print();
         }
 
-        // --- APPEL SERVERLESS VERS NETLIFY (SÉCURISÉ) ---
-        // Cette fonction envoie la demande à ton backend Netlify.
-        // Aucune clé API n'est visible ici, c'est le serveur qui s'en occupe.
-        async function callGemini(prompt, system) {
+        // --- NEW API SETTINGS LOGIC ---
+        function openSettings() {
+            document.getElementById('settings-modal').classList.remove('hidden');
+            document.getElementById('settings-modal').classList.add('flex');
+            // Load key if exists
+            const key = localStorage.getItem('gemini_api_key');
+            if(key) document.getElementById('api-key-input').value = key;
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.add('hidden');
+            document.getElementById('settings-modal').classList.remove('flex');
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('api-key-input').value.trim();
+            if(!key) {
+                alert("Veuillez entrer une clé valide.");
+                return;
+            }
+            localStorage.setItem('gemini_api_key', key);
+            closeSettings();
+            alert("Clé sauvegardée pour le mode GitHub/Test !");
+        }
+
+        // --- HYBRID API CALL ---
+        async function callGemini(prompt, systemInstruction) {
+            
+            // ÉTAPE 1: Essayer d'appeler la fonction Netlify (Serveur)
+            // C'est la méthode préférée pour la sécurité (pas de clé dans le navigateur).
             try {
-                // On appelle la fonction "gemini" qui est hébergée sur ton site
-                const response = await fetch('/.netlify/functions/gemini', {
+                // On tente l'appel seulement si on est sur un domaine qui supporte potentiellement les fonctions
+                // ou on tente le coup et on catch l'erreur.
+                console.log("Tentative connexion Serveur (Netlify)...");
+                const serverResponse = await fetch('/.netlify/functions/gemini', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        prompt: prompt, 
-                        system: system 
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        systemInstruction: { parts: [{ text: systemInstruction }] }
                     })
                 });
 
-                // Si le serveur Netlify renvoie une erreur (ex: clé manquante)
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || "Erreur serveur (500)");
+                if (serverResponse.ok) {
+                    const data = await serverResponse.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Pas de réponse (Serveur).";
+                } else if (serverResponse.status === 404) {
+                    console.warn("Fonction Netlify introuvable (404). Passage en mode Local/GitHub.");
+                    // On continue vers l'étape 2 (Fallback)
+                } else {
+                    // Erreur serveur autre que 404 (ex: 500)
+                    const errText = await serverResponse.text();
+                    console.error("Erreur Serveur:", errText);
+                    return `Erreur Serveur Netlify: ${serverResponse.status}`;
                 }
 
-                const data = await response.json();
-                
-                // On retourne la réponse textuelle de l'IA
-                return data.candidates?.[0]?.content?.parts?.[0]?.text || "L'IA a répondu, mais le format est inattendu.";
+            } catch (error) {
+                console.warn("Échec connexion Netlify (peut-être en local/github ?)", error);
+                // On continue vers l'étape 2 (Fallback)
+            }
 
-            } catch (e) {
-                console.error("Erreur technique:", e);
-                return "Erreur de connexion avec l'Assistant. Vérifiez que la variable GEMINI_API_KEY est bien configurée dans Netlify.";
+            // ÉTAPE 2: Fallback (Mode Direct / GitHub / Local)
+            // Si on est ici, c'est que le serveur a échoué ou n'existe pas.
+            console.log("Passage en mode Direct (Client-Side)...");
+            
+            let apiKey = typeof envApiKey !== 'undefined' && envApiKey ? envApiKey : localStorage.getItem('gemini_api_key');
+            
+            if (!apiKey) {
+                openSettings(); // Ouvre la modale pour demander la clé
+                return "⚠️ Mode GitHub/Test : La fonction serveur est inaccessible. Veuillez entrer une clé API via la roue dentée (⚙️) pour tester.";
+            }
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{
+                    role: "user",
+                    parts: [{ text: prompt }]
+                }],
+                systemInstruction: {
+                    parts: [{ text: systemInstruction }]
+                }
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    return `Erreur API Google (${data.error?.code}): ${data.error?.message}`;
+                }
+
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Pas de réponse.";
+
+            } catch (error) {
+                return "Erreur fatale de connexion (Internet ?).";
             }
         }
 
@@ -564,6 +654,11 @@
             const modal = document.getElementById('ai-modal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+        }
+
+        function closeAllModals() {
+             toggleSidebar(); // Close sidebar if open
+             closeSettings();
         }
 
         function switchTab(mode) {
