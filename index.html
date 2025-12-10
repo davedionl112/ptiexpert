@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PTI EXPERT LONGUE DURÉE</title>
+    <title>PTI EXPERT - Version Hybride</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -96,12 +96,14 @@
             <div class="bg-teal-600 p-1.5 rounded"><i class="fa-solid fa-notes-medical text-white text-lg"></i></div>
             <div>
                 <h1 class="text-base font-bold leading-tight">PTI EXPERT <span class="text-teal-400">LONGUE DURÉE</span></h1>
-                <p class="text-[10px] text-slate-400">Assistant Clinique</p>
+                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v2.1 Hybride)</span></p>
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <button onclick="openSettings()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white p-2 rounded transition-colors" title="Paramètres API (Mode Test/GitHub)">
-                <i class="fa-solid fa-gear text-lg"></i>
+            <!-- BOUTON RECONFIGURÉ POUR ÊTRE BIEN VISIBLE -->
+            <button onclick="openSettings()" class="flex items-center gap-2 text-xs bg-slate-700 hover:bg-slate-600 text-yellow-400 hover:text-white px-3 py-2 rounded transition-colors border border-slate-600" title="Paramètres API (Mode Test/GitHub)">
+                <i class="fa-solid fa-gear text-lg animate-[spin_10s_linear_infinite]"></i>
+                <span class="hidden md:inline font-bold">CONFIG API</span>
             </button>
             <button onclick="openAIModal('coach')" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded font-bold transition-colors flex items-center gap-2 border border-indigo-400 shadow-sm">
                 <i class="fa-solid fa-user-doctor"></i> Coach Clinique
