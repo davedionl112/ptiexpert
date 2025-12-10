@@ -96,7 +96,7 @@
             <div class="bg-teal-600 p-1.5 rounded"><i class="fa-solid fa-notes-medical text-white text-lg"></i></div>
             <div>
                 <h1 class="text-base font-bold leading-tight">PTI EXPERT <span class="text-teal-400">LONGUE DURÉE</span></h1>
-                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v2.5 Hybride - Stable)</span></p>
+                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v2.6 Hybride - 2.5 Flash)</span></p>
             </div>
         </div>
         <div class="flex items-center gap-3">
@@ -598,7 +598,7 @@
                 return "⚠️ Mode GitHub/Test : La fonction serveur est inaccessible. Veuillez entrer une clé API via la roue dentée (⚙️) pour tester.";
             }
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
             const payload = {
                 contents: [{
