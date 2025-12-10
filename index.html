@@ -96,7 +96,7 @@
             <div class="bg-teal-600 p-1.5 rounded"><i class="fa-solid fa-notes-medical text-white text-lg"></i></div>
             <div>
                 <h1 class="text-base font-bold leading-tight">PTI EXPERT <span class="text-teal-400">LONGUE DURÉE</span></h1>
-                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v2.6 Hybride - 2.5 Flash)</span></p>
+                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v2.7 QC)</span></p>
             </div>
         </div>
         <div class="flex items-center gap-3">
@@ -708,7 +708,7 @@
             out.innerHTML += `<div class="mb-3 loading-indicator"><span class="typing-dot"></span></div>`;
             out.scrollTop = out.scrollHeight;
             input.value = "";
-            const system = "Tu es un expert clinique en soins de longue durée au Québec. Réponses concises, normes OIIQ.";
+            const system = "Tu es un expert clinique en soins de longue durée au Québec agissant comme mentor pour un infirmier(ère). Tes réponses doivent respecter STRICTEMENT ces règles : 1. Tu t'adresses toujours à un pair infirmier. 2. Utilise UNIQUEMENT des références, protocoles et médicaments approuvés au Québec (MSSS, OIIQ). 3. AUCUNE abréviation non reconnue au Québec. 4. Si tu cites un outil d'évaluation (ex: PACSLAC), tu DOIS écrire sa signification complète entre parenthèses la première fois. Réponses concises et professionnelles.";
             const response = await callGemini(q, system);
             document.querySelector('.loading-indicator').remove();
             out.innerHTML += `<div class="mb-5 text-slate-800 bg-slate-50 p-4 rounded-lg border border-slate-100 shadow-sm prose prose-sm max-w-none">${marked.parse(response)}</div>`;
