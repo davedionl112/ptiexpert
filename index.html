@@ -96,7 +96,7 @@
             <div class="bg-teal-600 p-1.5 rounded"><i class="fa-solid fa-notes-medical text-white text-lg"></i></div>
             <div>
                 <h1 class="text-base font-bold leading-tight">PTI EXPERT <span class="text-teal-400">LONGUE DURÉE</span></h1>
-                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v2.7 QC)</span></p>
+                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v2.8 Auto-Retry)</span></p>
             </div>
         </div>
         <div class="flex items-center gap-3">
@@ -610,24 +610,40 @@
                 }
             };
 
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+            // Retry Loop pour gérer l'erreur 503 (Surcharge)
+            let attempts = 0;
+            const maxAttempts = 3;
+            
+            while (attempts < maxAttempts) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
 
-                const data = await response.json();
+                    // Si c'est une erreur 503 (Service Unavailable / Overloaded), on réessaie
+                    if (response.status === 503) {
+                        attempts++;
+                        console.warn(`Serveur surchargé (503). Tentative ${attempts}/${maxAttempts}...`);
+                        await new Promise(resolve => setTimeout(resolve, 2000)); // Attendre 2 sec
+                        continue; // Réessayer la boucle
+                    }
 
-                if (!response.ok) {
-                    return `Erreur API Google (${data.error?.code}): ${data.error?.message}`;
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        return `Erreur API Google (${data.error?.code}): ${data.error?.message}`;
+                    }
+
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Pas de réponse.";
+
+                } catch (error) {
+                    return "Erreur fatale de connexion (Internet ?).";
                 }
-
-                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Pas de réponse.";
-
-            } catch (error) {
-                return "Erreur fatale de connexion (Internet ?).";
             }
+            
+            return "Le serveur est trop occupé après plusieurs tentatives (503). Réessayez plus tard.";
         }
 
         // --- UI HELPERS ---
