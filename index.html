@@ -17,8 +17,8 @@
     <!-- Markdown Parser -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-    <!-- SheetJS (Pour lire les fichiers Excel) -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <!-- SheetJS (Version CDNJS plus stable) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; }
@@ -102,7 +102,7 @@
             <div class="bg-teal-600 p-1.5 rounded"><i class="fa-solid fa-notes-medical text-white text-lg"></i></div>
             <div>
                 <h1 class="text-base font-bold leading-tight">PTI EXPERT <span class="text-teal-400">LONGUE DURÉE</span></h1>
-                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v3.1 Rôles Mixtes)</span></p>
+                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v3.2 Anti-Spin)</span></p>
             </div>
         </div>
         <div class="flex items-center gap-3">
@@ -334,8 +334,18 @@
             const statusText = document.getElementById('status-text');
             const statusDot = document.getElementById('status-dot');
             
+            // Timeout de sécurité : Si après 2 sec rien n'est chargé, on force le mode fallback (Anti-Spin)
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Timeout chargement Excel")), 2000)
+            );
+
             try {
-                const response = await fetch('banque_pti.xlsx');
+                // On course entre le fetch et le timeout
+                const response = await Promise.race([
+                    fetch('banque_pti.xlsx'),
+                    timeoutPromise
+                ]);
+
                 if (!response.ok) throw new Error("Fichier non trouvé");
 
                 const arrayBuffer = await response.arrayBuffer();
@@ -610,7 +620,7 @@
             
             if (!apiKey) {
                 openSettings(); 
-                return ⚠️ Mode GitHub/Test : La fonction serveur est inaccessible. Veuillez entrer une clé API via la roue dentée (⚙️) pour tester.";
+                return "⚠️ Mode GitHub/Test : La fonction serveur est inaccessible. Veuillez entrer une clé API via la roue dentée (⚙️) pour tester.";
             }
 
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
