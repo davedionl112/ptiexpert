@@ -67,10 +67,16 @@
             font-size: 0.60rem; padding: 2px 5px; border-radius: 4px; font-weight: 800; text-transform: uppercase; margin-right: 6px; display: inline-block; min-width: 35px; text-align: center;
         }
         /* Role Colors */
-        .role-pab { background-color: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; } 
-        .role-aux { background-color: #fce7f3; color: #831843; border: 1px solid #f9a8d4; }
-        .role-inf { background-color: #dcfce7; color: #14532d; border: 1px solid #86efac; }
-        .role-all { background-color: #f1f5f9; color: #334151; border: 1px solid #cbd5e1; }
+        .role-pab { background-color: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; } /* Blue */
+        .role-aux { background-color: #fce7f3; color: #831843; border: 1px solid #f9a8d4; } /* Pink */
+        .role-inf { background-color: #dcfce7; color: #14532d; border: 1px solid #86efac; } /* Green */
+        .role-all { background-color: #f1f5f9; color: #334151; border: 1px solid #cbd5e1; } /* Grey */
+        
+        /* NOUVEAUX RÔLES MIXTES */
+        /* INF/AUX -> Purple (Mix Green/Pink ish) */
+        .role-inf-aux { background-color: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; }
+        /* AUX/PAB -> Indigo (Mix Pink/Blue ish) */
+        .role-aux-pab { background-color: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
 
         .typing-dot {
             animation: typing 1.4s infinite ease-in-out both;
@@ -96,7 +102,7 @@
             <div class="bg-teal-600 p-1.5 rounded"><i class="fa-solid fa-notes-medical text-white text-lg"></i></div>
             <div>
                 <h1 class="text-base font-bold leading-tight">PTI EXPERT <span class="text-teal-400">LONGUE DURÉE</span></h1>
-                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v3.0 - Fichiers Séparés)</span></p>
+                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v3.1 Rôles Mixtes)</span></p>
             </div>
         </div>
         <div class="flex items-center gap-3">
@@ -400,7 +406,7 @@
                 let directivesList = item.directives.map((d, idx) => `
                     <li class="directive-item flex items-start p-2 cursor-pointer border-b border-slate-50 last:border-0 rounded group" 
                         onclick="addDirective('${item.title.replace(/'/g, "\\'")}', '${d.text.replace(/'/g, "\\'")}', '${d.role}')">
-                        <span class="role-badge role-${d.role.toLowerCase()} mt-0.5 flex-none">${d.role}</span>
+                        <span class="role-badge role-${d.role.toLowerCase().replace('/','-')} mt-0.5 flex-none">${d.role}</span>
                         <span class="text-xs text-slate-600 leading-tight group-hover:text-teal-700">${d.text}</span>
                         <i class="fa-solid fa-plus text-teal-400 ml-auto text-xs opacity-0 group-hover:opacity-100 pl-2"></i>
                     </li>
@@ -465,7 +471,7 @@
                 const dirHtml = directives.map((d, i) => `
                     <div class="flex justify-between items-start mb-1 group hover:bg-slate-50 p-1 rounded border-b border-dashed border-slate-100 last:border-0">
                         <div class="text-xs">
-                            <span class="role-badge role-${d.role.toLowerCase()} text-[9px] mr-1 scale-90 origin-left">[${d.role}]</span> 
+                            <span class="role-badge role-${d.role.toLowerCase().replace('/','-')} text-[9px] mr-1 scale-90 origin-left">[${d.role}]</span> 
                             <span class="text-slate-700">${d.text}</span>
                         </div>
                         <button onclick="removeDirective('${prob}', ${i})" class="text-slate-300 hover:text-red-500 ml-2 no-print p-1">
@@ -515,7 +521,8 @@
                 const roles = [{code: 'PAB', title: 'PRÉPOSÉ(E) AUX BÉNÉFICIAIRES'}, {code: 'AUX', title: 'INFIRMIÈRE AUXILIAIRE'}, {code: 'INF', title: 'INFIRMIÈRE'}];
                 content = `<div style="font-family: sans-serif; color: #000;"><div style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;"><h1 style="font-size: 16pt; font-weight: bold; margin: 0;">PLAN DE TRAVAIL</h1><p style="margin: 0; font-size: 10pt;">Tâches par titre d'emploi</p></div>`;
                 roles.forEach(roleObj => {
-                    const tasks = allDir.filter(d => d.role === roleObj.code || d.role === 'ALL');
+                    // Modification ici pour inclure les rôles mixtes (ex: INF/AUX apparaît dans INF et dans AUX)
+                    const tasks = allDir.filter(d => d.role.includes(roleObj.code) || d.role === 'ALL');
                     if (tasks.length > 0) {
                         content += `<div style="margin-bottom: 20px; border: 2px solid #000; page-break-inside: avoid;"><h3 style="margin: 0; background: #e0e0e0; padding: 8px; font-size: 12pt; border-bottom: 1px solid #000; font-weight:bold;">${roleObj.title}</h3><table style="width: 100%; border-collapse: collapse; font-size: 10pt;">${tasks.map(t => `<tr><td style="border-bottom: 1px solid #ccc; padding: 6px; width: 25%; font-weight:bold; background:#f9f9f9;">${t.prob}</td><td style="border-bottom: 1px solid #ccc; padding: 6px;">${t.text}</td></tr>`).join('')}</table></div>`;
                     }
@@ -603,7 +610,7 @@
             
             if (!apiKey) {
                 openSettings(); 
-                return "⚠️ Mode GitHub/Test : La fonction serveur est inaccessible. Veuillez entrer une clé API via la roue dentée (⚙️) pour tester.";
+                return ⚠️ Mode GitHub/Test : La fonction serveur est inaccessible. Veuillez entrer une clé API via la roue dentée (⚙️) pour tester.";
             }
 
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
