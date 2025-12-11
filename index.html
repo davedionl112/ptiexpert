@@ -46,10 +46,10 @@
             font-size: 0.60rem; padding: 2px 5px; border-radius: 4px; font-weight: 800; text-transform: uppercase; margin-right: 6px; display: inline-block; min-width: 35px; text-align: center;
         }
         /* Role Colors */
-        .role-pab { background-color: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; } /* Blue */
-        .role-aux { background-color: #fce7f3; color: #831843; border: 1px solid #f9a8d4; } /* Pink */
-        .role-inf { background-color: #dcfce7; color: #14532d; border: 1px solid #86efac; } /* Green */
-        .role-all { background-color: #f1f5f9; color: #334151; border: 1px solid #cbd5e1; } /* Grey */
+        .role-pab { background-color: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; } 
+        .role-aux { background-color: #fce7f3; color: #831843; border: 1px solid #f9a8d4; } 
+        .role-inf { background-color: #dcfce7; color: #14532d; border: 1px solid #86efac; } 
+        .role-all { background-color: #f1f5f9; color: #334151; border: 1px solid #cbd5e1; } 
         
         .typing-dot {
             animation: typing 1.4s infinite ease-in-out both;
@@ -58,28 +58,23 @@
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
         @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
-
-        /* Tabs Styling */
-        .active-tab { border-bottom: 3px solid #0d9488; color: #0f766e; font-weight: 700; background: #f0fdfa; }
-        .inactive-tab { color: #64748b; background: #f8fafc; border-bottom: 3px solid transparent; }
-        .inactive-tab:hover { background: #f1f5f9; color: #475569; }
-        
-        /* Modal Settings Animation */
-        .modal-enter { opacity: 0; transform: scale(0.95); }
-        .modal-enter-active { opacity: 1; transform: scale(1); transition: opacity 0.3s, transform 0.3s; }
         
         /* Dashboard Card Animation */
         .dash-card { transition: all 0.2s ease-in-out; }
         .dash-card:hover { transform: translateY(-3px); }
+        
+        /* Tool View Container */
+        .tool-view { display: none; flex-direction: column; height: 100%; overflow: hidden; background-color: #fff; }
+        .tool-view.active { display: flex; }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden bg-slate-50">
 
     <!-- Header -->
-    <header class="bg-slate-800 text-white h-14 flex items-center justify-between px-4 shadow-lg z-20 flex-none">
+    <header class="bg-slate-800 text-white h-14 flex items-center justify-between px-4 shadow-lg z-50 flex-none">
         <div class="flex items-center gap-3">
             <!-- Home Button -->
-            <button onclick="showDashboard()" class="bg-slate-700 hover:bg-slate-600 p-1.5 rounded transition-colors text-teal-400" title="Retour Accueil">
+            <button onclick="navigateTo('dashboard')" class="bg-slate-700 hover:bg-slate-600 p-1.5 rounded transition-colors text-teal-400" title="Retour Accueil">
                 <i class="fa-solid fa-house text-lg"></i>
             </button>
             <div class="h-6 w-px bg-slate-600 mx-1"></div>
@@ -87,322 +82,314 @@
                 <div class="bg-teal-600 p-1 rounded text-xs"><i class="fa-solid fa-user-nurse text-white"></i></div>
                 <div>
                     <h1 class="text-sm font-bold leading-tight">PTI EXPERT <span class="text-teal-400">CLINIQUE</span></h1>
-                    <p class="text-[9px] text-slate-400">Assistant & Formulaire 6087 <span class="text-red-400 font-bold ml-1">(v5.0 Hub)</span></p>
+                    <p class="text-[9px] text-slate-400">Assistant & Formulaire 6087 <span class="text-red-400 font-bold ml-1">(v6.0 Hub)</span></p>
                 </div>
             </div>
         </div>
         <div class="flex items-center gap-3">
+            <span id="current-tool-label" class="hidden md:inline-block text-xs font-bold text-slate-400 uppercase tracking-wider mr-2">Tableau de bord</span>
             <button onclick="openSettings()" class="flex items-center gap-2 text-xs bg-slate-700 hover:bg-slate-600 text-yellow-400 hover:text-white px-3 py-2 rounded transition-colors border border-slate-600" title="Paramètres API">
                 <i class="fa-solid fa-gear"></i>
-            </button>
-            <button onclick="openAIModal('coach')" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded font-bold transition-colors flex items-center gap-2 border border-indigo-400 shadow-sm animate-[pulse_3s_infinite]">
-                <i class="fa-solid fa-robot"></i> Assistant IA
-            </button>
-            <button onclick="showApp(); toggleSidebar();" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded font-bold transition-colors flex items-center gap-2 border border-slate-500 shadow-sm relative">
-                <i class="fa-solid fa-clipboard-list"></i>
-                <span class="hidden sm:inline">Panier PTI</span>
-                <span id="pti-badge" class="absolute -top-1 -right-1 bg-red-500 text-white px-1.5 h-4 flex items-center justify-center rounded-full text-[9px] hidden shadow-sm border border-white">0</span>
             </button>
         </div>
     </header>
 
-    <!-- NEW: DASHBOARD VIEW (LANDING PAGE) -->
-    <main id="dashboard-view" class="flex-1 overflow-y-auto bg-slate-50 p-4 sm:p-8 flex flex-col items-center">
-        <div class="max-w-4xl w-full space-y-8 mt-4 sm:mt-10">
-            
-            <!-- Welcome Header -->
-            <div class="text-center space-y-2 mb-8">
-                <h2 class="text-3xl font-bold text-slate-800 tracking-tight">Bonjour, <span class="text-teal-600">Dave</span></h2>
-                <p class="text-slate-500 text-lg">Bienvenue sur ta station clinique PPL. Que veux-tu faire aujourd'hui?</p>
-            </div>
+    <!-- CONTENT AREA -->
+    <div id="main-container" class="flex-1 overflow-hidden relative bg-slate-100">
 
-            <!-- Zone A: AI Tools (Grid) -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center">
-                    <i class="fa-solid fa-microchip mr-2 text-indigo-400"></i>Outils Intelligents (Coach)
-                </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    
-                    <!-- Coach -->
-                    <button onclick="openAIModal('coach')" class="dash-card p-4 rounded-lg border border-indigo-100 bg-indigo-50/50 hover:bg-indigo-50 hover:shadow-md text-left group">
-                        <div class="flex items-center justify-between mb-3">
-                            <i class="fa-solid fa-user-doctor text-2xl text-indigo-600 group-hover:scale-110 transition-transform"></i>
-                            <span class="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200">Général</span>
-                        </div>
-                        <h4 class="font-bold text-slate-800">Assistant IA</h4>
-                        <p class="text-xs text-slate-600 mt-1">Questions cliniques, procédures et médicaments.</p>
-                    </button>
-                    
-                    <!-- Malaise 6087 -->
-                    <button onclick="openAIModal('malaise')" class="dash-card p-4 rounded-lg border border-teal-100 bg-teal-50/50 hover:bg-teal-50 hover:shadow-md text-left group">
-                        <div class="flex items-center justify-between mb-3">
-                            <i class="fa-solid fa-file-medical-alt text-2xl text-teal-600 group-hover:scale-110 transition-transform"></i>
-                            <span class="text-[10px] font-bold bg-teal-100 text-teal-700 px-2 py-0.5 rounded border border-teal-200">Form. 6087</span>
-                        </div>
-                        <h4 class="font-bold text-slate-800">Éval. Malaise</h4>
-                        <p class="text-xs text-slate-600 mt-1">Générateur de note structurée selon le formulaire.</p>
-                    </button>
-
-                    <!-- Guide -->
-                    <button onclick="openAIModal('guide')" class="dash-card p-4 rounded-lg border border-blue-100 bg-blue-50/50 hover:bg-blue-50 hover:shadow-md text-left group">
-                         <div class="flex items-center justify-between mb-3">
-                            <i class="fa-solid fa-list-check text-2xl text-blue-600 group-hover:scale-110 transition-transform"></i>
-                             <span class="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Aide-mémoire</span>
-                        </div>
-                        <h4 class="font-bold text-slate-800">Guide Ciblé</h4>
-                        <p class="text-xs text-slate-600 mt-1">Quoi évaluer spécifiquement pour un symptôme?</p>
-                    </button>
-
-                    <!-- Simulator -->
-                    <button onclick="openAIModal('sim')" class="dash-card p-4 rounded-lg border border-purple-100 bg-purple-50/50 hover:bg-purple-50 hover:shadow-md text-left group">
-                         <div class="flex items-center justify-between mb-3">
-                            <i class="fa-solid fa-graduation-cap text-2xl text-purple-600 group-hover:scale-110 transition-transform"></i>
-                            <span class="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Formation</span>
-                        </div>
-                        <h4 class="font-bold text-slate-800">Simulateur</h4>
-                        <p class="text-xs text-slate-600 mt-1">Générateur de cas cliniques pour pratiquer.</p>
-                    </button>
-
-                     <!-- Redactor -->
-                    <button onclick="openAIModal('manual')" class="dash-card p-4 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:shadow-md text-left group col-span-1 sm:col-span-2 md:col-span-2">
-                         <div class="flex items-center justify-between mb-3">
-                            <i class="fa-solid fa-pen-fancy text-2xl text-slate-600 group-hover:scale-110 transition-transform"></i>
-                            <span class="text-[10px] font-bold bg-slate-200 text-slate-700 px-2 py-0.5 rounded border border-slate-300">Outil Rédaction</span>
-                        </div>
-                        <h4 class="font-bold text-slate-800">Rédacteur de Note</h4>
-                        <p class="text-xs text-slate-600 mt-1">Reformulation professionnelle de tes notes narratives.</p>
-                    </button>
+        <!-- 1. DASHBOARD VIEW (LANDING PAGE) -->
+        <main id="view-dashboard" class="tool-view active overflow-y-auto p-4 sm:p-8 items-center bg-slate-50">
+            <div class="max-w-4xl w-full space-y-8 mt-4 sm:mt-10 mx-auto">
+                
+                <!-- Welcome Header -->
+                <div class="text-center space-y-2 mb-8">
+                    <h2 class="text-3xl font-bold text-slate-800 tracking-tight">Bonjour, <span class="text-teal-600">Dave</span></h2>
+                    <p class="text-slate-500 text-lg">Bienvenue sur ta station clinique PPL. Que veux-tu faire aujourd'hui?</p>
                 </div>
-            </div>
 
-            <!-- Zone B: PTI Access -->
-            <button onclick="showApp()" class="w-full bg-slate-800 text-white p-6 rounded-xl shadow-lg border border-slate-700 hover:bg-slate-700 hover:shadow-xl transition-all group flex items-center justify-between relative overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-r from-teal-900/50 to-transparent pointer-events-none"></div>
-                <div class="relative z-10 text-left">
-                    <h3 class="text-xl font-bold group-hover:text-teal-300 transition-colors">ACCÉDER À LA BANQUE PTI</h3>
-                    <p class="text-slate-300 text-sm mt-1">Consultation des directives, création de PTI et surveillance clinique.</p>
+                <!-- Zone A: AI Tools (Grid) -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center">
+                        <i class="fa-solid fa-microchip mr-2 text-indigo-400"></i>Outils Intelligents (Coach)
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        
+                        <!-- Coach -->
+                        <button onclick="navigateTo('coach')" class="dash-card p-4 rounded-lg border border-indigo-100 bg-indigo-50/50 hover:bg-indigo-50 hover:shadow-md text-left group">
+                            <div class="flex items-center justify-between mb-3">
+                                <i class="fa-solid fa-user-doctor text-2xl text-indigo-600 group-hover:scale-110 transition-transform"></i>
+                                <span class="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200">Général</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800">Assistant IA</h4>
+                            <p class="text-xs text-slate-600 mt-1">Questions cliniques, procédures et médicaments.</p>
+                        </button>
+                        
+                        <!-- Malaise 6087 -->
+                        <button onclick="navigateTo('malaise')" class="dash-card p-4 rounded-lg border border-teal-100 bg-teal-50/50 hover:bg-teal-50 hover:shadow-md text-left group">
+                            <div class="flex items-center justify-between mb-3">
+                                <i class="fa-solid fa-file-medical-alt text-2xl text-teal-600 group-hover:scale-110 transition-transform"></i>
+                                <span class="text-[10px] font-bold bg-teal-100 text-teal-700 px-2 py-0.5 rounded border border-teal-200">Form. 6087</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800">Éval. Malaise</h4>
+                            <p class="text-xs text-slate-600 mt-1">Générateur de note structurée selon le formulaire.</p>
+                        </button>
+
+                        <!-- Guide -->
+                        <button onclick="navigateTo('guide')" class="dash-card p-4 rounded-lg border border-blue-100 bg-blue-50/50 hover:bg-blue-50 hover:shadow-md text-left group">
+                             <div class="flex items-center justify-between mb-3">
+                                <i class="fa-solid fa-list-check text-2xl text-blue-600 group-hover:scale-110 transition-transform"></i>
+                                 <span class="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Aide-mémoire</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800">Guide Ciblé</h4>
+                            <p class="text-xs text-slate-600 mt-1">Quoi évaluer spécifiquement pour un symptôme?</p>
+                        </button>
+
+                        <!-- Simulator -->
+                        <button onclick="navigateTo('sim')" class="dash-card p-4 rounded-lg border border-purple-100 bg-purple-50/50 hover:bg-purple-50 hover:shadow-md text-left group">
+                             <div class="flex items-center justify-between mb-3">
+                                <i class="fa-solid fa-graduation-cap text-2xl text-purple-600 group-hover:scale-110 transition-transform"></i>
+                                <span class="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Formation</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800">Simulateur</h4>
+                            <p class="text-xs text-slate-600 mt-1">Générateur de cas cliniques pour pratiquer.</p>
+                        </button>
+
+                         <!-- Redactor -->
+                        <button onclick="navigateTo('manual')" class="dash-card p-4 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:shadow-md text-left group col-span-1 sm:col-span-2 md:col-span-2">
+                             <div class="flex items-center justify-between mb-3">
+                                <i class="fa-solid fa-pen-fancy text-2xl text-slate-600 group-hover:scale-110 transition-transform"></i>
+                                <span class="text-[10px] font-bold bg-slate-200 text-slate-700 px-2 py-0.5 rounded border border-slate-300">Outil Rédaction</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800">Rédacteur de Note</h4>
+                            <p class="text-xs text-slate-600 mt-1">Reformulation professionnelle de tes notes narratives.</p>
+                        </button>
+                    </div>
                 </div>
-                <div class="relative z-10 bg-slate-700 p-4 rounded-full group-hover:bg-teal-600 transition-colors border border-slate-600 group-hover:border-teal-400">
-                    <i class="fa-solid fa-arrow-right text-2xl"></i>
-                </div>
-            </button>
-            
-            <p class="text-center text-[10px] text-slate-400 mt-12 font-mono">CISSS des Laurentides - Pavillon Philippe-Lapointe</p>
-        </div>
-    </main>
 
-    <!-- OLD: PTI APP VIEW (Hidden by default) -->
-    <div id="app-view" class="hidden flex-1 flex overflow-hidden relative">
-        
-        <!-- Left: Library (Scrollable) -->
-        <main class="flex-1 overflow-y-auto p-4 bg-slate-100" id="main-library">
-            
-            <!-- Excel Loader Status -->
-            <div id="db-status" class="mb-4 text-xs font-bold text-slate-500 flex items-center justify-end">
-                <span class="inline-block w-2 h-2 rounded-full bg-yellow-400 mr-2 animate-pulse" id="status-dot"></span>
-                <span id="status-text">Initialisation...</span>
-            </div>
-
-            <!-- Filters -->
-            <div class="bg-white p-3 rounded-lg shadow-sm border border-slate-200 mb-4 sticky top-0 z-10 flex flex-wrap gap-2 items-center">
-                <span class="text-[10px] uppercase font-bold text-slate-400 mr-2"><i class="fa-solid fa-filter mr-1"></i>Catégories:</span>
-                <button class="filter-btn active bg-slate-800 text-white text-xs px-3 py-1.5 rounded font-bold transition-colors" onclick="filterLib('all', this)">Tout</button>
-                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('scpd', this)">SCPD</button>
-                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('soins', this)">Soins</button>
-                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('clinique', this)">Médical</button>
-                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('infection', this)">Infections</button>
-                <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('palliatif', this)">Palliatif</button>
-            </div>
-
-            <!-- Library Grid -->
-            <div id="library-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-12">
-                <!-- Cards injected via JS -->
+                <!-- Zone B: PTI Access -->
+                <button onclick="navigateTo('app')" class="w-full bg-slate-800 text-white p-6 rounded-xl shadow-lg border border-slate-700 hover:bg-slate-700 hover:shadow-xl transition-all group flex items-center justify-between relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-r from-teal-900/50 to-transparent pointer-events-none"></div>
+                    <div class="relative z-10 text-left">
+                        <h3 class="text-xl font-bold group-hover:text-teal-300 transition-colors">ACCÉDER À LA BANQUE PTI</h3>
+                        <p class="text-slate-300 text-sm mt-1">Consultation des directives, création de PTI et surveillance clinique.</p>
+                    </div>
+                    <div class="relative z-10 bg-slate-700 p-4 rounded-full group-hover:bg-teal-600 transition-colors border border-slate-600 group-hover:border-teal-400">
+                        <i class="fa-solid fa-arrow-right text-2xl"></i>
+                    </div>
+                </button>
+                
+                <p class="text-center text-[10px] text-slate-400 mt-12 font-mono">CISSS des Laurentides - Pavillon Philippe-Lapointe</p>
             </div>
         </main>
 
-        <!-- Right: PTI Sidebar (Overlay/Slide-in) -->
-        <aside id="pti-sidebar" class="fixed inset-y-0 right-0 w-full md:w-[700px] bg-white shadow-2xl z-40 transform translate-x-full transition-transform duration-300 flex flex-col border-l border-slate-200">
-            <!-- Sidebar Header -->
-            <div class="p-4 bg-slate-800 text-white flex justify-between items-center shadow-md flex-none">
-                <div>
-                    <h3 class="font-bold text-sm uppercase"><i class="fa-solid fa-file-signature mr-2"></i> Prévisualisation PTI</h3>
-                    <p class="text-[10px] text-slate-300">Format officiel (OIIQ/MSSS)</p>
+        <!-- 2. COACH VIEW -->
+        <div id="view-coach" class="tool-view max-w-5xl mx-auto shadow-2xl border-x border-slate-200">
+            <div class="bg-indigo-50 p-4 border-b border-indigo-100 flex justify-between items-center">
+                <div class="flex items-center gap-2 text-indigo-800">
+                    <i class="fa-solid fa-user-doctor text-xl"></i>
+                    <h2 class="font-bold text-lg">Assistant Clinique IA</h2>
                 </div>
-                <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-
-            <!-- PTI Content (Scrollable) -->
-            <div class="flex-1 overflow-y-auto p-6 bg-white" id="pti-content">
-                <div id="empty-state" class="flex flex-col items-center justify-center h-full text-slate-300">
-                    <i class="fa-solid fa-folder-plus text-6xl mb-4 text-slate-200"></i>
-                    <p class="text-sm font-bold">Panier vide</p>
-                    <p class="text-xs mt-1">Sélectionnez des directives dans la banque.</p>
-                </div>
-                
-                <!-- The Visual PTI Table -->
-                <div id="pti-visual-table" class="hidden">
-                    <div class="border-b-2 border-slate-800 mb-4 pb-2 flex justify-between items-end">
-                        <h2 class="font-bold text-xl text-slate-800 tracking-tight">PLAN THÉRAPEUTIQUE</h2>
-                        <span class="text-xs text-slate-500 uppercase font-bold tracking-wider">Document Légal</span>
-                    </div>
-                    <table class="pti-table shadow-sm">
-                        <thead>
-                            <tr>
-                                <th style="width: 30%;">CONSTATS (PQRSTU)</th>
-                                <th style="width: 70%;">DIRECTIVES INFIRMIÈRES & SURVEILLANCE</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pti-table-body">
-                            <!-- Rows generated here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Action Footer -->
-            <div class="p-4 bg-slate-50 border-t border-slate-200 flex-none space-y-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-                <button onclick="generatePTINote()" class="w-full bg-teal-700 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded shadow-sm text-sm flex justify-center items-center gap-2 group transition-all">
-                    <i class="fa-solid fa-wand-magic-sparkles text-yellow-300 group-hover:rotate-12 transition-transform"></i> 
-                    Générer Note Évolution (Basée sur PTI)
+                <button onclick="runSimulationPTI('coach')" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-colors">
+                     <i class="fa-solid fa-clipboard-check mr-1"></i> Convertir en PTI
                 </button>
-                <div class="grid grid-cols-1 gap-3">
-                    <button onclick="downloadDOCX()" class="bg-blue-800 hover:bg-blue-700 text-white py-3 px-4 rounded text-sm font-bold flex justify-center items-center gap-2 shadow transition-colors">
-                        <i class="fa-solid fa-file-word text-white"></i> Télécharger PTI (Word/DOCX)
+            </div>
+            <div id="output-coach" class="flex-1 overflow-y-auto p-6 space-y-4 bg-white scroll-smooth">
+                <div class="text-center text-slate-400 mt-20">
+                    <i class="fa-solid fa-robot text-4xl mb-3 text-indigo-200"></i>
+                    <p>Je suis prêt à t'assister, Dave.</p>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex gap-2">
+                <input type="text" id="input-coach" class="flex-1 border border-slate-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm" placeholder="Pose ta question clinique ici..." onkeypress="if(event.key==='Enter') sendChat()">
+                <button onclick="sendChat()" class="bg-indigo-600 text-white px-6 rounded-lg hover:bg-indigo-700 shadow-md font-bold"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+
+        <!-- 3. MALAISE 6087 VIEW -->
+        <div id="view-malaise" class="tool-view max-w-5xl mx-auto shadow-2xl border-x border-slate-200">
+            <div class="bg-teal-50 p-4 border-b border-teal-100 flex justify-between items-center">
+                <div class="flex items-center gap-2 text-teal-800">
+                    <i class="fa-solid fa-file-medical-alt text-xl"></i>
+                    <h2 class="font-bold text-lg">Évaluation Malaise (6087)</h2>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="copyContent('output-malaise')" class="text-teal-600 hover:text-teal-800 text-xs font-bold uppercase"><i class="fa-regular fa-copy mr-1"></i> Copier</button>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-50 border-b border-slate-200">
+                <p class="text-xs text-slate-500 font-bold uppercase mb-2">Entrée des observations (Vrac)</p>
+                <textarea id="input-malaise" class="w-full border border-slate-300 rounded p-3 text-sm focus:ring-2 focus:ring-teal-500 h-24 shadow-inner" placeholder="Ex: Mme Tremblay, dif. resp, pâle, sat 88%, bruits normaux..."></textarea>
+                <div class="flex gap-2 mt-2">
+                    <button onclick="generateMalaiseNote()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded shadow-sm text-sm transition-colors">
+                        <i class="fa-solid fa-file-contract mr-2"></i>Générer Note Structurée
+                    </button>
+                    <button onclick="runSimulationPTI('malaise')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow-sm text-sm transition-colors">
+                        <i class="fa-solid fa-clipboard-check mr-1"></i> Sim. PTI
                     </button>
                 </div>
             </div>
-        </aside>
+            <div id="output-malaise" class="flex-1 overflow-y-auto p-6 bg-white prose prose-slate max-w-none text-sm leading-relaxed">
+                <div class="text-center text-slate-400 mt-20">
+                    <p>La note générée apparaîtra ici.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. GUIDE VIEW -->
+        <div id="view-guide" class="tool-view max-w-5xl mx-auto shadow-2xl border-x border-slate-200">
+             <div class="bg-blue-50 p-4 border-b border-blue-100 flex justify-between items-center">
+                <div class="flex items-center gap-2 text-blue-800">
+                    <i class="fa-solid fa-list-check text-xl"></i>
+                    <h2 class="font-bold text-lg">Guide d'Évaluation Ciblé</h2>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-50 border-b border-slate-200">
+                <div class="flex gap-2">
+                    <input type="text" id="input-guide" class="flex-1 border border-slate-300 rounded p-3 text-sm focus:ring-2 focus:ring-blue-500 shadow-sm" placeholder="Quel est le problème? (ex: Douleur thoracique, Chute, Dyspnée...)" onkeypress="if(event.key==='Enter') generateGuide()">
+                    <button onclick="generateGuide()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded shadow-sm text-sm">
+                        <i class="fa-solid fa-search mr-2"></i>Quoi évaluer?
+                    </button>
+                </div>
+            </div>
+            <div id="output-guide" class="flex-1 overflow-y-auto p-6 bg-white prose prose-blue max-w-none text-sm leading-relaxed">
+                <div class="text-center text-slate-400 mt-20">
+                    <p>La checklist apparaîtra ici.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. SIMULATOR VIEW -->
+        <div id="view-sim" class="tool-view max-w-5xl mx-auto shadow-2xl border-x border-slate-200">
+             <div class="bg-purple-50 p-4 border-b border-purple-100 flex justify-between items-center">
+                <div class="flex items-center gap-2 text-purple-800">
+                    <i class="fa-solid fa-graduation-cap text-xl"></i>
+                    <h2 class="font-bold text-lg">Simulateur Clinique (Formation)</h2>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-50 border-b border-slate-200 flex gap-2 items-center">
+                 <select id="input-sim" class="flex-1 border border-slate-300 rounded p-3 text-sm bg-white shadow-sm cursor-pointer">
+                    <option value="cardiaque">Malaise Cardiaque</option>
+                    <option value="respiratoire">Détresse Respiratoire</option>
+                    <option value="neuro">AVC / Neuro</option>
+                    <option value="chute">Chute avec blessure</option>
+                    <option value="abdo">Douleur Abdominale</option>
+                    <option value="hypoglycemie">Hypoglycémie</option>
+                    <option value="delirium">Delirium / SCPD</option>
+               </select>
+               <button onclick="generateSimulation()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-3 rounded shadow-sm text-sm">
+                   <i class="fa-solid fa-random mr-2"></i>Générer Cas
+               </button>
+            </div>
+            <div id="output-sim" class="flex-1 overflow-y-auto p-6 bg-white prose prose-purple max-w-none text-sm leading-relaxed">
+                <div class="text-center text-slate-400 mt-20">
+                    <p>Le scénario de simulation apparaîtra ici.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. MANUAL REDACTOR VIEW -->
+        <div id="view-manual" class="tool-view max-w-5xl mx-auto shadow-2xl border-x border-slate-200">
+             <div class="bg-slate-100 p-4 border-b border-slate-200 flex justify-between items-center">
+                <div class="flex items-center gap-2 text-slate-700">
+                    <i class="fa-solid fa-pen-fancy text-xl"></i>
+                    <h2 class="font-bold text-lg">Rédacteur de Note</h2>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="copyContent('output-manual')" class="text-slate-600 hover:text-slate-800 text-xs font-bold uppercase"><i class="fa-regular fa-copy mr-1"></i> Copier</button>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-50 border-b border-slate-200">
+                <p class="text-xs text-slate-500 font-bold uppercase mb-2">Situation à reformuler</p>
+                <textarea id="input-manual" class="w-full border border-slate-300 rounded p-3 text-sm focus:ring-2 focus:ring-slate-500 h-24 shadow-inner" placeholder="Décrivez la situation pour une note narrative standard..."></textarea>
+                <div class="flex gap-2 mt-2">
+                    <button onclick="generateManualNote()" class="flex-1 bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 rounded shadow-sm text-sm">
+                        <i class="fa-solid fa-pen-nib mr-2"></i>Rédiger Note Pro
+                    </button>
+                    <button onclick="runSimulationPTI('manual')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow-sm text-sm">
+                        <i class="fa-solid fa-clipboard-check mr-1"></i> Sim. PTI
+                    </button>
+                </div>
+            </div>
+            <div id="output-manual" class="flex-1 overflow-y-auto p-6 bg-white prose prose-slate max-w-none text-sm leading-relaxed">
+                <div class="text-center text-slate-400 mt-20">
+                    <p>La note finale apparaîtra ici.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. PTI APP VIEW (EXISTING) -->
+        <div id="view-app" class="tool-view flex-row relative h-full">
+            <!-- Left: Library -->
+            <main class="flex-1 overflow-y-auto p-4 bg-slate-100" id="main-library">
+                <div id="db-status" class="mb-4 text-xs font-bold text-slate-500 flex items-center justify-end">
+                    <span class="inline-block w-2 h-2 rounded-full bg-yellow-400 mr-2 animate-pulse" id="status-dot"></span>
+                    <span id="status-text">Initialisation...</span>
+                </div>
+                <div class="bg-white p-3 rounded-lg shadow-sm border border-slate-200 mb-4 sticky top-0 z-10 flex flex-wrap gap-2 items-center">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 mr-2"><i class="fa-solid fa-filter mr-1"></i>Catégories:</span>
+                    <button class="filter-btn active bg-slate-800 text-white text-xs px-3 py-1.5 rounded font-bold transition-colors" onclick="filterLib('all', this)">Tout</button>
+                    <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('scpd', this)">SCPD</button>
+                    <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('soins', this)">Soins</button>
+                    <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('clinique', this)">Médical</button>
+                    <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('infection', this)">Infections</button>
+                    <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('palliatif', this)">Palliatif</button>
+                </div>
+                <div id="library-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-12"></div>
+            </main>
+            <!-- Right: Sidebar -->
+            <aside id="pti-sidebar" class="fixed inset-y-0 right-0 w-full md:w-[700px] bg-white shadow-2xl z-40 transform translate-x-full transition-transform duration-300 flex flex-col border-l border-slate-200">
+                <div class="p-4 bg-slate-800 text-white flex justify-between items-center shadow-md flex-none">
+                    <div>
+                        <h3 class="font-bold text-sm uppercase"><i class="fa-solid fa-file-signature mr-2"></i> Prévisualisation PTI</h3>
+                        <p class="text-[10px] text-slate-300">Format officiel (OIIQ/MSSS)</p>
+                    </div>
+                    <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-6 bg-white" id="pti-content">
+                    <div id="empty-state" class="flex flex-col items-center justify-center h-full text-slate-300">
+                        <i class="fa-solid fa-folder-plus text-6xl mb-4 text-slate-200"></i>
+                        <p class="text-sm font-bold">Panier vide</p>
+                        <p class="text-xs mt-1">Sélectionnez des directives dans la banque.</p>
+                    </div>
+                    <div id="pti-visual-table" class="hidden">
+                        <div class="border-b-2 border-slate-800 mb-4 pb-2 flex justify-between items-end">
+                            <h2 class="font-bold text-xl text-slate-800 tracking-tight">PLAN THÉRAPEUTIQUE</h2>
+                            <span class="text-xs text-slate-500 uppercase font-bold tracking-wider">Document Légal</span>
+                        </div>
+                        <table class="pti-table shadow-sm">
+                            <thead><tr><th style="width: 30%;">CONSTATS (PQRSTU)</th><th style="width: 70%;">DIRECTIVES INFIRMIÈRES & SURVEILLANCE</th></tr></thead>
+                            <tbody id="pti-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50 border-t border-slate-200 flex-none space-y-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                    <button onclick="generatePTINote()" class="w-full bg-teal-700 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded shadow-sm text-sm flex justify-center items-center gap-2 group transition-all">
+                        <i class="fa-solid fa-wand-magic-sparkles text-yellow-300 group-hover:rotate-12 transition-transform"></i> Générer Note Évolution (Basée sur PTI)
+                    </button>
+                    <div class="grid grid-cols-1 gap-3">
+                        <button onclick="downloadDOCX()" class="bg-blue-800 hover:bg-blue-700 text-white py-3 px-4 rounded text-sm font-bold flex justify-center items-center gap-2 shadow transition-colors">
+                            <i class="fa-solid fa-file-word text-white"></i> Télécharger PTI (Word/DOCX)
+                        </button>
+                    </div>
+                </div>
+            </aside>
+            <button onclick="toggleSidebar()" class="absolute bottom-6 right-6 bg-slate-800 text-white p-4 rounded-full shadow-lg z-30 hover:bg-slate-700 transition-transform hover:scale-105">
+                 <i class="fa-solid fa-clipboard-list text-xl"></i>
+                 <span id="pti-badge-float" class="absolute top-0 right-0 bg-red-500 text-white px-2 py-0.5 rounded-full text-[10px] hidden border border-white">0</span>
+            </button>
+        </div>
+
     </div>
 
     <!-- Overlay -->
-    <div id="overlay" onclick="closeAllModals()" class="fixed inset-0 bg-black/50 z-30 hidden backdrop-blur-sm transition-opacity"></div>
-
-    <!-- AI Modal (Super-App Wrapper) -->
-    <div id="ai-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeAIModal()"></div>
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col relative z-10 overflow-hidden transform transition-all">
-            
-            <!-- Modal Tabs (Navigation) -->
-            <div class="flex border-b border-slate-200 bg-slate-50 overflow-x-auto no-scrollbar flex-none">
-                <button id="tab-coach" class="px-4 py-3 text-sm transition-colors active-tab whitespace-nowrap flex-1 md:flex-none" onclick="switchTab('coach')">
-                    <i class="fa-solid fa-user-doctor mr-2"></i>Coach Clinique
-                </button>
-                <button id="tab-malaise" class="px-4 py-3 text-sm transition-colors inactive-tab whitespace-nowrap flex-1 md:flex-none" onclick="switchTab('malaise')">
-                    <i class="fa-solid fa-file-medical-alt mr-2"></i>Éval. Malaise 6087
-                </button>
-                <button id="tab-guide" class="px-4 py-3 text-sm transition-colors inactive-tab whitespace-nowrap flex-1 md:flex-none" onclick="switchTab('guide')">
-                    <i class="fa-solid fa-list-check mr-2"></i>Guide Ciblé
-                </button>
-                <button id="tab-sim" class="px-4 py-3 text-sm transition-colors inactive-tab whitespace-nowrap flex-1 md:flex-none" onclick="switchTab('sim')">
-                    <i class="fa-solid fa-graduation-cap mr-2"></i>Simulateur
-                </button>
-                <button id="tab-manual" class="px-4 py-3 text-sm transition-colors inactive-tab whitespace-nowrap flex-1 md:flex-none" onclick="switchTab('manual')">
-                    <i class="fa-solid fa-pen-fancy mr-2"></i>Rédacteur
-                </button>
-                <button onclick="closeAIModal()" class="ml-auto px-5 text-slate-400 hover:text-slate-600 border-l border-slate-200 hover:bg-slate-100 transition-colors">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <!-- MAIN CONTENT AREA -->
-            <div class="flex-1 flex flex-col overflow-hidden bg-white relative">
-                
-                <!-- INPUT AREAS (DYNAMIC) -->
-                
-                <!-- 1. COACH INPUT (Only for coach tab) -->
-                <div id="coach-input-section" class="hidden absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 bg-slate-50 z-20">
-                    <div class="flex gap-2">
-                        <button onclick="runSimulationPTI('chat')" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg shadow-sm text-xs font-bold whitespace-nowrap" title="Analyser la conversation pour PTI">
-                            <i class="fa-solid fa-clipboard-check mr-1"></i> SIMULATION PTI
-                        </button>
-                        <input type="text" id="ai-input" class="flex-1 border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm" placeholder="Question clinique ou situation...">
-                        <button onclick="sendChat()" class="bg-indigo-600 text-white px-5 rounded-lg hover:bg-indigo-700 shadow-md"><i class="fa-solid fa-paper-plane"></i></button>
-                    </div>
-                </div>
-
-                <!-- 2. MALAISE 6087 INPUT -->
-                <div id="malaise-input-section" class="hidden p-4 bg-slate-50 border-b border-slate-200 flex-none">
-                    <div class="flex flex-col gap-2">
-                        <p class="text-xs text-slate-500 font-bold uppercase"><i class="fa-solid fa-notes-medical mr-1"></i> Générateur de Note Structurée (6087)</p>
-                        <textarea id="malaise-text" class="w-full border border-slate-300 rounded p-3 text-sm focus:ring-2 focus:ring-teal-500 mb-2 h-20" placeholder="Entrez vos observations en vrac (ex: Mme Tremblay, dif. resp, pâle, sat 88%, bruits normaux...)"></textarea>
-                        <div class="flex gap-2">
-                            <button onclick="generateMalaiseNote()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded shadow-sm text-sm">
-                                <i class="fa-solid fa-file-contract mr-2"></i>Générer Note 6087
-                            </button>
-                            <button onclick="runSimulationPTI('malaise')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow-sm text-sm">
-                                <i class="fa-solid fa-clipboard-check mr-1"></i> Sim. PTI
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3. GUIDE CIBLÉ INPUT -->
-                <div id="guide-input-section" class="hidden p-4 bg-slate-50 border-b border-slate-200 flex-none">
-                     <p class="text-xs text-slate-500 font-bold uppercase mb-2"><i class="fa-solid fa-bullseye mr-1"></i> Aide-mémoire interactif</p>
-                    <div class="flex gap-2">
-                        <input type="text" id="guide-input" class="flex-1 border border-slate-300 rounded p-2 text-sm" placeholder="Quel est le problème? (ex: Douleur abdominale, Chute, Dyspnée...)">
-                        <button onclick="generateGuide()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded shadow-sm text-sm">
-                            <i class="fa-solid fa-search mr-2"></i>Quoi évaluer?
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 4. SIMULATOR INPUT -->
-                <div id="sim-input-section" class="hidden p-4 bg-slate-50 border-b border-slate-200 flex-none">
-                    <p class="text-xs text-slate-500 font-bold uppercase mb-2"><i class="fa-solid fa-chalkboard-user mr-1"></i> Formation Continue</p>
-                   <div class="flex gap-2 items-center">
-                       <select id="sim-type" class="border border-slate-300 rounded p-2 text-sm bg-white">
-                           <option value="cardiaque">Malaise Cardiaque</option>
-                           <option value="respiratoire">Détresse Respiratoire</option>
-                           <option value="neuro">AVC / Neuro</option>
-                           <option value="chute">Chute avec blessure</option>
-                           <option value="abdo">Douleur Abdominale</option>
-                           <option value="hypoglycemie">Hypoglycémie</option>
-                           <option value="delirium">Delirium / SCPD</option>
-                       </select>
-                       <button onclick="generateSimulation()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2 rounded shadow-sm text-sm flex-1">
-                           <i class="fa-solid fa-random mr-2"></i>Générer un cas clinique (6087)
-                       </button>
-                   </div>
-               </div>
-
-                <!-- 5. MANUAL INPUT -->
-                <div id="manual-input-section" class="hidden p-4 bg-slate-50 border-b border-slate-200 flex-none">
-                    <textarea id="manual-text" class="w-full border border-slate-300 rounded p-3 text-sm focus:ring-2 focus:ring-teal-500 mb-2" rows="3" placeholder="Décrivez la situation pour une note narrative standard..."></textarea>
-                    <div class="flex gap-2">
-                        <button onclick="generateManualNote()" class="flex-1 bg-teal-600 text-white font-bold py-2 rounded shadow-sm hover:bg-teal-700">
-                            <i class="fa-solid fa-pen-nib mr-2"></i>Rédiger Note
-                        </button>
-                         <button onclick="runSimulationPTI('manual')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow-sm text-sm">
-                                <i class="fa-solid fa-clipboard-check mr-1"></i> Sim. PTI
-                        </button>
-                    </div>
-                </div>
-
-                <!-- OUTPUT DISPLAY (SHARED) -->
-                <div id="ai-output" class="flex-1 overflow-y-auto p-6 text-sm text-slate-800 leading-relaxed bg-white font-medium pb-20 scroll-smooth">
-                    <!-- Dynamic content lands here -->
-                </div>
-
-                <!-- FOOTER ACTIONS -->
-                <div id="ai-footer" class="hidden absolute bottom-0 right-0 p-4 flex gap-2 z-20">
-                    <button onclick="copyNote()" class="bg-slate-700 text-white px-4 py-2 rounded shadow hover:bg-slate-800 text-xs font-bold uppercase transition-colors">
-                        <i class="fa-regular fa-copy mr-1"></i> Copier
-                    </button>
-                </div>
-
-            </div>
-        </div>
-    </div>
+    <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden backdrop-blur-sm transition-opacity"></div>
 
     <!-- Settings Modal -->
     <div id="settings-modal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeSettings()"></div>
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-md p-6 relative z-10">
             <h3 class="text-lg font-bold text-slate-800 mb-2"><i class="fa-solid fa-screwdriver-wrench text-teal-600 mr-2"></i>Configuration API</h3>
-            <p class="text-sm text-slate-600 mb-4">
-                Entrez votre clé API Gemini pour activer l'intelligence artificielle.
-            </p>
+            <p class="text-sm text-slate-600 mb-4">Entrez votre clé API Gemini pour activer l'intelligence artificielle.</p>
             <input type="password" id="api-key-input" class="w-full border border-slate-300 rounded p-2 text-sm mb-4 focus:ring-2 focus:ring-teal-500 focus:outline-none" placeholder="Clé API (AIza...)">
             <div class="flex justify-end gap-2">
                 <button onclick="closeSettings()" class="text-slate-500 hover:text-slate-700 text-sm font-bold px-4 py-2">Fermer</button>
@@ -421,9 +408,8 @@
 
         let database = []; 
         let currentPTI = {};
-        let currentTab = 'coach';
         
-        // --- CONTEXTE FORMULAIRE 6087 (LE CERVEAU) ---
+        // --- CONTEXTE FORMULAIRE 6087 (LE CERVEAU COMMUN) ---
         const context6087 = `
         RÉFÉRENCE OFFICIELLE : FORMULAIRE 6087 (Malaise Dominant)
         STRUCTURE OBLIGATOIRE :
@@ -448,22 +434,37 @@
             const storedKey = localStorage.getItem('gemini_api_key');
             if(storedKey) document.getElementById('api-key-input').value = storedKey;
             
-            // Ensure Dashboard is Default
-            showDashboard();
+            // Start at Dashboard
+            navigateTo('dashboard');
         });
 
-        // --- NAVIGATION DASHBOARD/APP ---
-        function showDashboard() {
-            document.getElementById('dashboard-view').classList.remove('hidden');
-            document.getElementById('app-view').classList.add('hidden');
-            closeAIModal();
-        }
-        
-        function showApp() {
-            document.getElementById('dashboard-view').classList.add('hidden');
-            document.getElementById('app-view').classList.remove('hidden');
-            document.getElementById('app-view').classList.add('flex'); // Ensure flex is restored
-            renderLibrary('all'); // Refresh lib if needed
+        // --- NAVIGATION SYSTEM ---
+        function navigateTo(viewName) {
+            // Hide all views
+            document.querySelectorAll('.tool-view').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Show target view
+            const target = document.getElementById('view-' + viewName);
+            if(target) {
+                target.classList.add('active');
+                
+                // Update Label in Header
+                const labels = {
+                    'dashboard': 'Tableau de bord',
+                    'coach': 'Assistant IA',
+                    'malaise': 'Malaise 6087',
+                    'guide': 'Guide Ciblé',
+                    'sim': 'Simulateur',
+                    'manual': 'Rédacteur',
+                    'app': 'Banque PTI'
+                };
+                document.getElementById('current-tool-label').innerText = labels[viewName] || 'Outil';
+                
+                // Special init for PTI App
+                if(viewName === 'app') renderLibrary('all');
+            }
         }
 
         async function loadDatabase() {
@@ -485,12 +486,10 @@
                 database = Object.values(tempMap);
                 document.getElementById('status-text').innerText = "Base Excel chargée";
                 document.getElementById('status-dot').classList.replace('bg-yellow-400', 'bg-green-500');
-                renderLibrary('all');
             } catch (error) {
                 database = fallbackDatabase; 
                 document.getElementById('status-text').innerText = "Mode Défaut";
                 document.getElementById('status-dot').classList.replace('bg-yellow-400', 'bg-orange-500');
-                renderLibrary('all');
             }
         }
 
@@ -509,7 +508,9 @@
             if (!currentPTI[prob].some(d => d.text === text)) {
                 currentPTI[prob].push({ text, role });
                 updateSidebar();
-                const b = document.getElementById('pti-badge'); b.classList.remove('hidden'); b.innerText = Object.values(currentPTI).flat().length;
+                const b = document.getElementById('pti-badge-float'); 
+                b.classList.remove('hidden'); 
+                b.innerText = Object.values(currentPTI).flat().length;
             }
         }
         function updateSidebar() {
@@ -524,52 +525,29 @@
         }
         function removeDirective(p,i) { currentPTI[p].splice(i,1); if(currentPTI[p].length===0) delete currentPTI[p]; updateSidebar(); }
 
-        // --- UI NAVIGATION ---
+        // --- UI UTILS ---
         function toggleSidebar() { document.getElementById('pti-sidebar').classList.toggle('translate-x-full'); document.getElementById('overlay').classList.toggle('hidden'); }
-        function openAIModal(tab) { document.getElementById('ai-modal').classList.remove('hidden'); document.getElementById('ai-modal').classList.add('flex'); if(tab) switchTab(tab); }
-        function closeAIModal() { document.getElementById('ai-modal').classList.add('hidden'); document.getElementById('ai-modal').classList.remove('flex'); }
-        function closeAllModals() { toggleSidebar(); closeAIModal(); closeSettings(); }
         function openSettings() { document.getElementById('settings-modal').classList.remove('hidden'); document.getElementById('settings-modal').classList.add('flex'); }
         function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); document.getElementById('settings-modal').classList.remove('flex'); }
         function saveApiKey() { localStorage.setItem('gemini_api_key', document.getElementById('api-key-input').value); closeSettings(); }
-
-        function switchTab(mode) {
-            currentTab = mode;
-            // Tabs styles
-            ['coach','malaise','guide','sim','manual'].forEach(t => {
-                const el = document.getElementById('tab-'+t);
-                el.className = (t === mode) ? "px-4 py-3 text-sm transition-colors active-tab whitespace-nowrap flex-1 md:flex-none" : "px-4 py-3 text-sm transition-colors inactive-tab whitespace-nowrap flex-1 md:flex-none";
-            });
-
-            // Input sections
-            ['coach','malaise','guide','sim','manual'].forEach(t => {
-                document.getElementById(t+'-input-section').classList.add('hidden');
-            });
-            document.getElementById(mode+'-input-section').classList.remove('hidden');
-            
-            // Footer logic
-            const footer = document.getElementById('ai-footer');
-            if (mode === 'coach') footer.classList.add('hidden');
-            else footer.classList.remove('hidden');
-
-            // Default Output
-            const out = document.getElementById('ai-output');
-            if(out.innerHTML.trim() === "") {
-                if(mode === 'coach') out.innerHTML = '<div class="text-center text-slate-400 mt-20"><i class="fa-solid fa-robot text-4xl mb-3 text-indigo-200"></i><p>Je suis prêt à t\'assister.</p></div>';
-                if(mode === 'malaise') out.innerHTML = '<div class="text-center text-slate-400 mt-20"><i class="fa-solid fa-file-medical text-4xl mb-3 text-teal-200"></i><p>Entre tes observations pour générer une note structurée 6087.</p></div>';
-            }
+        function copyContent(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text);
+            alert("Contenu copié !");
         }
 
-        // --- CORE AI LOGIC ---
+        // --- CORE AI LOGIC (CENTRALISÉE) ---
         async function callGemini(prompt, sysContext) {
             const apiKey = localStorage.getItem('gemini_api_key') || envApiKey;
             if (!apiKey) { openSettings(); return "⚠️ Clé API manquante. Configurez-la via la roue dentée."; }
 
-            // INTEGRATION IDÉE 3 : RED FLAGS (Analyseur Sécurité)
+            // INSTRUCTIONS DE SÉCURITÉ & PERSONNALITÉ (Dave's preferences)
             const securityInstruction = `
             CRITIQUE : ANALYSE DE SÉCURITÉ CONSTANTE (FORM 6087)
             Si tu détectes des mots-clés de "Danger immédiat" ou "Signes de détresse" (ex: Teint grisâtre, léthargie, sat < 85%, détresse resp, changement brusque comportement), tu DOIS commencer ta réponse par un bloc d'alerte :
             <div class="bg-red-50 border-l-4 border-red-500 p-2 mb-4 text-red-700 font-bold text-xs"><i class="fa-solid fa-triangle-exclamation mr-1"></i> ALERTE CLINIQUE 6087: Critères de détresse détectés. Vérifier le niveau de soins.</div>
+            
+            TON : Tu parles avec un accent québécois professionnel et neutre. Tu t'adresses à un collègue infirmier (Dave).
             `;
 
             const fullSystem = `${sysContext}\n\n${context6087}\n\n${securityInstruction}`;
@@ -588,94 +566,98 @@
             } catch (e) { return "Erreur connexion."; }
         }
 
-        function showLoading() {
-            const out = document.getElementById('ai-output');
-            out.innerHTML += `<div class="mb-3 loading-indicator flex justify-center"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>`;
+        function showLoading(outputId) {
+            const out = document.getElementById(outputId);
+            const loader = document.createElement('div');
+            loader.className = "mb-3 loading-indicator flex justify-center py-4";
+            loader.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+            out.appendChild(loader);
             out.scrollTop = out.scrollHeight;
         }
         function hideLoading() { document.querySelectorAll('.loading-indicator').forEach(e => e.remove()); }
 
         // --- FEATURE 1: COACH CHAT ---
         async function sendChat() {
-            const input = document.getElementById('ai-input');
+            const input = document.getElementById('input-coach');
             const q = input.value; 
             if(!q) return;
             
-            const out = document.getElementById('ai-output');
-            out.innerHTML += `<div class="mb-4 text-right"><span class="bg-indigo-100 text-indigo-800 py-2 px-3 rounded-lg inline-block text-sm shadow-sm border border-indigo-200">${q}</span></div>`;
+            const out = document.getElementById('output-coach');
+            out.innerHTML += `<div class="mb-4 text-right"><span class="bg-indigo-100 text-indigo-800 py-2 px-3 rounded-lg inline-block text-sm shadow-sm border border-indigo-200 font-medium">${q}</span></div>`;
             input.value = "";
-            showLoading();
+            showLoading('output-coach');
 
-            const sys = "Tu es un expert clinique 'Coach' pour infirmières en CHSLD. Réponds de façon pédagogique. Utilise un français québécois professionnel.";
+            const sys = "Tu es un expert clinique 'Coach' pour infirmières en CHSLD. Réponds de façon pédagogique.";
             const res = await callGemini(q, sys);
             
             hideLoading();
-            out.innerHTML += `<div class="mb-6 text-slate-700 bg-white p-0 rounded-lg prose prose-sm max-w-none"><div class="flex gap-3"><div class="flex-none pt-1"><div class="bg-teal-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-robot"></i></div></div><div>${marked.parse(res)}</div></div></div>`;
+            out.innerHTML += `<div class="mb-6 text-slate-700 bg-white p-0 rounded-lg prose prose-sm max-w-none border-l-4 border-indigo-500 pl-4"><div class="flex gap-3"><div>${marked.parse(res)}</div></div></div>`;
             out.scrollTop = out.scrollHeight;
         }
 
-        // --- FEATURE 2 (IDEA 1): MALAISE 6087 GENERATOR ---
+        // --- FEATURE 2: MALAISE 6087 GENERATOR ---
         async function generateMalaiseNote() {
-            const text = document.getElementById('malaise-text').value;
+            const text = document.getElementById('input-malaise').value;
             if(!text) return;
-            document.getElementById('ai-output').innerHTML = "";
-            showLoading();
+            document.getElementById('output-malaise').innerHTML = "";
+            showLoading('output-malaise');
 
             const prompt = `Voici des observations en vrac : "${text}". \n\nGénère une note structurée EXCLUSIVEMENT selon les titres du formulaire 6087. Si une info est manquante, laisse la section vide ou mets 'Non mentionné'. Sois précis et concis.`;
             const sys = "Tu es un assistant de documentation clinique expert du formulaire 6087. Tu ne fais que reformater les données.";
             
             const res = await callGemini(prompt, sys);
             hideLoading();
-            document.getElementById('ai-output').innerHTML = `<div class="bg-slate-50 border border-slate-200 rounded p-6 shadow-inner prose prose-slate max-w-none text-sm">${marked.parse(res)}</div>`;
+            document.getElementById('output-malaise').innerHTML = `<div class="bg-slate-50 border border-slate-200 rounded p-6 shadow-inner">${marked.parse(res)}</div>`;
         }
 
-        // --- FEATURE 3 (IDEA 2): TARGETED GUIDE ---
+        // --- FEATURE 3: TARGETED GUIDE ---
         async function generateGuide() {
-            const problem = document.getElementById('guide-input').value;
+            const problem = document.getElementById('input-guide').value;
             if(!problem) return;
-            document.getElementById('ai-output').innerHTML = "";
-            showLoading();
+            document.getElementById('output-guide').innerHTML = "";
+            showLoading('output-guide');
 
             const prompt = `Le résident présente : ${problem}. \n\nAgis comme un guide interactif. Liste les éléments SPÉCIFIQUES du formulaire 6087 à vérifier pour CE problème précis (ex: quel type de palpation, quels signes vitaux surveiller, quels signes de détresse chercher). Fais une checklist.`;
             const sys = "Tu es un mentor clinique. Tu aides à ne rien oublier lors de l'évaluation d'un malaise dominant.";
 
             const res = await callGemini(prompt, sys);
             hideLoading();
-            document.getElementById('ai-output').innerHTML = `<div class="bg-blue-50 border border-blue-100 rounded p-4 shadow-sm prose prose-blue max-w-none text-sm">${marked.parse(res)}</div>`;
+            document.getElementById('output-guide').innerHTML = `<div class="bg-blue-50 border border-blue-100 rounded p-4 shadow-sm">${marked.parse(res)}</div>`;
         }
 
-        // --- FEATURE 4 (IDEA 5): SIMULATOR ---
+        // --- FEATURE 4: SIMULATOR ---
         async function generateSimulation() {
-            const type = document.getElementById('sim-type').value;
-            document.getElementById('ai-output').innerHTML = "";
-            showLoading();
+            const type = document.getElementById('input-sim').value;
+            document.getElementById('output-sim').innerHTML = "";
+            showLoading('output-sim');
 
             const prompt = `Génère un scénario clinique fictif complet pour un cas de : ${type}. \n\nPrésente le cas COMME SI on lisait un formulaire 6087 rempli (Anamnèse, PQRSTU, Vitaux, Examen physique détaillé). C'est pour la formation d'une infirmière.`;
             const sys = "Tu es un générateur de simulation clinique pour la formation.";
 
             const res = await callGemini(prompt, sys);
             hideLoading();
-            document.getElementById('ai-output').innerHTML = `<div class="bg-purple-50 border border-purple-100 rounded p-6 shadow-sm prose prose-purple max-w-none text-sm relative"><span class="absolute top-2 right-2 text-xs font-bold text-purple-300 uppercase">Simulation</span>${marked.parse(res)}</div>`;
+            document.getElementById('output-sim').innerHTML = `<div class="bg-purple-50 border border-purple-100 rounded p-6 shadow-sm relative"><span class="absolute top-2 right-2 text-xs font-bold text-purple-300 uppercase">Simulation</span>${marked.parse(res)}</div>`;
         }
 
-        // --- FEATURE 5 (IDEA 4): TRIAGE AUTO (SIMULATION PTI) ---
-        async function runSimulationPTI(source) {
+        // --- FEATURE 5: TRIAGE AUTO (SIMULATION PTI) ---
+        async function runSimulationPTI(sourceView) {
             let context = "";
-            if(source === 'chat') {
-                // Grab text from chat
-                context = document.getElementById('ai-output').innerText;
-            } else if (source === 'malaise') {
-                context = document.getElementById('malaise-text').value;
-            } else if (source === 'manual') {
-                context = document.getElementById('manual-text').value;
+            let outputId = "";
+
+            if(sourceView === 'coach') {
+                context = document.getElementById('output-coach').innerText;
+                outputId = 'output-coach';
+            } else if (sourceView === 'malaise') {
+                context = document.getElementById('input-malaise').value;
+                outputId = 'output-malaise';
+            } else if (sourceView === 'manual') {
+                context = document.getElementById('input-manual').value;
+                outputId = 'output-manual';
             }
 
             if(!context || context.length < 10) return alert("Pas assez d'information pour simuler un PTI.");
-
-            // Open Modal if not open (case of button click from list)
-            openAIModal();
-            // We use the output window of the current tab
-            showLoading();
+            
+            showLoading(outputId);
 
             const prompt = `Basé sur ces données cliniques :\n"${context.substring(0, 1500)}..."\n\nAgis comme le 'Triage Automatique'. Suggère un PTI (Problème/Besoin prioritaire + Directives infirmières concrètes). Utilise le format : PROBLÈME : ... / DIRECTIVES : ...`;
             const sys = "Tu es un expert en élaboration de PTI (Plan Thérapeutique Infirmier). Tu analyses les données pour trouver les problèmes prioritaires.";
@@ -683,31 +665,27 @@
             const res = await callGemini(prompt, sys);
             hideLoading();
             
-            // Append result cleanly
-            const currentOut = document.getElementById('ai-output');
+            const currentOut = document.getElementById(outputId);
             const ptiBlock = `<div class="mt-4 border-t-2 border-indigo-100 pt-4"><div class="bg-indigo-50 border border-indigo-200 p-4 rounded-lg shadow-sm"><h4 class="font-bold text-indigo-800 text-xs uppercase mb-2"><i class="fa-solid fa-clipboard-list mr-2"></i>Suggestion PTI Automatique</h4><div class="prose prose-sm text-indigo-900">${marked.parse(res)}</div></div></div>`;
+            
+            // Append or replace depending on view type (Coach appends, others might just show below)
             currentOut.innerHTML += ptiBlock;
             currentOut.scrollTop = currentOut.scrollHeight;
         }
 
         // --- MANUAL NOTE ---
         async function generateManualNote() {
-            const text = document.getElementById('manual-text').value;
+            const text = document.getElementById('input-manual').value;
             if(!text) return;
-            document.getElementById('ai-output').innerHTML = "";
-            showLoading();
+            document.getElementById('output-manual').innerHTML = "";
+            showLoading('output-manual');
             const res = await callGemini(`Rédige une note concise pour: "${text}"`, "Tu es experte en documentation.");
             hideLoading();
-            document.getElementById('ai-output').innerHTML = `<div class="prose prose-sm">${marked.parse(res)}</div>`;
+            document.getElementById('output-manual').innerHTML = `<div class="bg-white border border-slate-200 p-4 rounded shadow-sm">${marked.parse(res)}</div>`;
         }
 
-        // --- UTILS ---
-        function copyNote() {
-            navigator.clipboard.writeText(document.getElementById('ai-output').innerText);
-            alert("Copié !");
-        }
+        // --- WORD DOWNLOAD ---
         function downloadDOCX() {
-            // Placeholder for Word generation logic
             const problems = Object.keys(currentPTI);
             if (problems.length === 0) return alert("Le panier PTI est vide.");
 
@@ -743,6 +721,34 @@
 
             Packer.toBlob(doc).then(blob => { saveAs(blob, "PTI_Expert_Document.docx"); }).catch(err => { console.error(err); alert("Erreur Word."); });
         }
+
+        // --- NEW: GENERATE PTI NOTE (FROM BASKET) ---
+        async function generatePTINote() {
+            const problems = Object.keys(currentPTI);
+            if(problems.length === 0) return alert("Veuillez d'abord ajouter des éléments au PTI.");
+
+            // Switch to a 'result' view or use a modal? Let's use the Coach view for the result
+            navigateTo('coach');
+            
+            let context = "";
+            problems.forEach(p => {
+                context += `PROBLÈME: ${p}\n`;
+                currentPTI[p].forEach(d => context += `- ${d.text}\n`);
+            });
+
+            const out = document.getElementById('output-coach');
+            out.innerHTML += `<div class="mb-4 text-center text-xs text-slate-400 font-bold uppercase">--- GÉNÉRATION NOTE ÉVOLUTION ---</div>`;
+            showLoading('output-coach');
+
+            const prompt = `Voici les constats et interventions PTI :\n${context}\n\nRédige une note d'évolution narrative TRÈS CONCISE (style télégraphique amélioré).`;
+            const sys = "Tu es une infirmière expérimentée en CHSLD au Québec.";
+            
+            const res = await callGemini(prompt, sys);
+            hideLoading();
+            out.innerHTML += `<div class="mb-6 bg-teal-50 text-slate-700 p-4 rounded-lg prose prose-sm max-w-none border border-teal-200 shadow-sm">${marked.parse(res)}</div>`;
+            out.scrollTop = out.scrollHeight;
+        }
+
     </script>
 </body>
 </html>
