@@ -17,8 +17,11 @@
     <!-- Markdown Parser -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-    <!-- SheetJS (Version CDNJS plus stable) -->
+    <!-- SheetJS (Pour Excel) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- html2pdf.js (Pour générer le PDF) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; }
@@ -38,31 +41,6 @@
         .pti-table th { background-color: #e2e8f0; padding: 10px; text-align: left; font-weight: bold; border: 2px solid #94a3b8; text-transform: uppercase; }
         .pti-table td { padding: 10px; border: 1px solid #cbd5e1; vertical-align: top; }
         
-        /* FIX IMPORTANT : On cache la zone d'impression sur l'écran */
-        #print-area { display: none; }
-
-        /* PRINT STYLES - ROBUST FIX */
-        @media print {
-            body > * { display: none !important; } /* Cache tout le body */
-            
-            #print-area { 
-                display: block !important; /* Affiche SEULEMENT la zone d'impression */
-                position: absolute; 
-                top: 0; 
-                left: 0; 
-                width: 100%; 
-                height: auto; 
-                z-index: 9999; 
-                background: white;
-                padding: 0;
-                margin: 0;
-            }
-            #print-area * { visibility: visible !important; }
-            .role-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 1px solid #ccc; }
-            table, tr, td, th { page-break-inside: avoid; }
-            @page { margin: 1.5cm; size: portrait; }
-        }
-
         .role-badge {
             font-size: 0.60rem; padding: 2px 5px; border-radius: 4px; font-weight: 800; text-transform: uppercase; margin-right: 6px; display: inline-block; min-width: 35px; text-align: center;
         }
@@ -73,9 +51,7 @@
         .role-all { background-color: #f1f5f9; color: #334151; border: 1px solid #cbd5e1; } /* Grey */
         
         /* NOUVEAUX RÔLES MIXTES */
-        /* INF/AUX -> Purple (Mix Green/Pink ish) */
         .role-inf-aux { background-color: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; }
-        /* AUX/PAB -> Indigo (Mix Pink/Blue ish) */
         .role-aux-pab { background-color: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
 
         .typing-dot {
@@ -102,7 +78,7 @@
             <div class="bg-teal-600 p-1.5 rounded"><i class="fa-solid fa-notes-medical text-white text-lg"></i></div>
             <div>
                 <h1 class="text-base font-bold leading-tight">PTI EXPERT <span class="text-teal-400">LONGUE DURÉE</span></h1>
-                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v3.2 Anti-Spin)</span></p>
+                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v3.3 PDF)</span></p>
             </div>
         </div>
         <div class="flex items-center gap-3">
@@ -158,7 +134,7 @@
             <div class="p-4 bg-slate-800 text-white flex justify-between items-center shadow-md flex-none">
                 <div>
                     <h3 class="font-bold text-sm uppercase"><i class="fa-solid fa-file-signature mr-2"></i> Prévisualisation PTI</h3>
-                    <p class="text-[10px] text-slate-300">Format officiel (OIIQ/MSSS) + Plan de Travail</p>
+                    <p class="text-[10px] text-slate-300">Format officiel (OIIQ/MSSS)</p>
                 </div>
                 <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
@@ -200,13 +176,10 @@
                     Générer Note Évolution (Basée sur PTI)
                 </button>
 
-                <!-- Print Buttons Row -->
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="printView('pti')" class="bg-slate-800 hover:bg-slate-700 text-white py-2.5 px-3 rounded text-xs font-bold flex justify-center items-center gap-2 shadow transition-colors">
-                        <i class="fa-solid fa-print"></i> Imprimer PTI (Légal)
-                    </button>
-                    <button onclick="printView('plan')" class="bg-white hover:bg-slate-100 text-slate-800 py-2.5 px-3 rounded text-xs font-bold flex justify-center items-center gap-2 border border-slate-300 shadow-sm transition-colors">
-                        <i class="fa-solid fa-users-gear text-blue-600"></i> Imprimer Plan de Travail
+                <!-- NEW PDF BUTTON -->
+                <div class="grid grid-cols-1 gap-3">
+                    <button onclick="downloadPDF()" class="bg-slate-800 hover:bg-slate-700 text-white py-3 px-4 rounded text-sm font-bold flex justify-center items-center gap-2 shadow transition-colors">
+                        <i class="fa-solid fa-file-pdf text-red-400"></i> Télécharger PTI (PDF)
                     </button>
                 </div>
             </div>
@@ -494,53 +467,60 @@
             });
         }
 
-        // --- PRINTING LOGIC ---
-        function printView(mode) {
-            const printArea = document.getElementById('print-area');
+        // --- PDF GENERATION LOGIC ---
+        function downloadPDF() {
             const problems = Object.keys(currentPTI);
             if (problems.length === 0) return alert("Le panier PTI est vide.");
-            let content = '';
+            
+            // Construction du contenu HTML pour le PDF
+            // Note: On utilise des styles inline pour garantir le rendu dans html2pdf
+            let content = `
+                <div style="font-family: 'Arial', sans-serif; color: #333; padding: 20px;">
+                    <div style="border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
+                        <h1 style="font-size: 18pt; font-weight: bold; margin: 0; color: #000;">PLAN THÉRAPEUTIQUE INFIRMIER (PTI)</h1>
+                        <p style="margin: 5px 0 0 0; font-size: 10pt; color: #555;">Soins de Longue Durée - Document Clinique</p>
+                        <div style="margin-top:10px; font-size: 10pt;"><strong>Date:</strong> .............................. <strong>Heure:</strong> ............</div>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
+                        <thead>
+                            <tr style="background-color: #f3f4f6;">
+                                <th style="border: 1px solid #999; padding: 10px; text-align: left; width: 35%; font-weight:bold;">CONSTATS (PQRSTU)</th>
+                                <th style="border: 1px solid #999; padding: 10px; text-align: left; width: 65%; font-weight:bold;">DIRECTIVES & SURVEILLANCE</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${problems.map(prob => `
+                                <tr>
+                                    <td style="border: 1px solid #999; padding: 10px; vertical-align: top; background-color: #fff;"><strong>${prob}</strong></td>
+                                    <td style="border: 1px solid #999; padding: 10px; vertical-align: top; background-color: #fff;">
+                                        <ul style="margin: 0; padding-left: 20px; list-style-type: disc;">
+                                            ${currentPTI[prob].map(d => `<li style="margin-bottom: 5px;">${d.text} <span style="font-size:8pt; font-weight:bold; color:#555;">[${d.role}]</span></li>`).join('')}
+                                        </ul>
+                                    </td>
+                                </tr>`).join('')}
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 50px; font-size: 10pt; border-top:1px solid #333; padding-top:10px; display:flex; justify-content:space-between;">
+                        <div><strong>Signature infirmière:</strong> ............................................................................</div>
+                        <div><strong>Permis:</strong> ...................</div>
+                    </div>
+                    <div style="margin-top: 20px; font-size: 8pt; color: #999; text-align: center;">Généré par PTI Expert - Assistant Clinique</div>
+                </div>`;
 
-            if (mode === 'pti') {
-                content = `
-                    <div style="font-family: sans-serif; color: #000;">
-                        <div style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
-                            <h1 style="font-size: 16pt; font-weight: bold; margin: 0;">PLAN THÉRAPEUTIQUE INFIRMIER (PTI)</h1>
-                            <p style="margin: 5px 0 0 0; font-size: 10pt;">Soins de Longue Durée</p>
-                            <div style="margin-top:10px; font-size: 10pt;">Date: .............................. Heure: ............</div>
-                        </div>
-                        <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
-                            <thead><tr style="background: #f0f0f0;"><th style="border: 1px solid #000; padding: 8px; text-align: left; width: 30%;">CONSTATS</th><th style="border: 1px solid #000; padding: 8px; text-align: left; width: 70%;">DIRECTIVES</th></tr></thead>
-                            <tbody>
-                                ${problems.map(prob => `
-                                    <tr>
-                                        <td style="border: 1px solid #000; padding: 8px; vertical-align: top;"><strong>${prob}</strong></td>
-                                        <td style="border: 1px solid #000; padding: 8px; vertical-align: top;">
-                                            <ul style="margin: 0; padding-left: 20px; list-style-type: square;">
-                                                ${currentPTI[prob].map(d => `<li style="margin-bottom: 4px;">${d.text} <span style="font-size:8pt; font-weight:bold;">[${d.role}]</span></li>`).join('')}
-                                            </ul>
-                                        </td>
-                                    </tr>`).join('')}
-                            </tbody>
-                        </table>
-                        <div style="margin-top: 40px; font-size: 10pt; border-top:1px solid #000; padding-top:10px;"><p>Signature infirmière: ............................................................................ Permis: ...................</p></div>
-                    </div>`;
-            } else if (mode === 'plan') {
-                let allDir = [];
-                problems.forEach(p => { currentPTI[p].forEach(d => allDir.push({ prob: p, ...d })); });
-                const roles = [{code: 'PAB', title: 'PRÉPOSÉ(E) AUX BÉNÉFICIAIRES'}, {code: 'AUX', title: 'INFIRMIÈRE AUXILIAIRE'}, {code: 'INF', title: 'INFIRMIÈRE'}];
-                content = `<div style="font-family: sans-serif; color: #000;"><div style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;"><h1 style="font-size: 16pt; font-weight: bold; margin: 0;">PLAN DE TRAVAIL</h1><p style="margin: 0; font-size: 10pt;">Tâches par titre d'emploi</p></div>`;
-                roles.forEach(roleObj => {
-                    // Modification ici pour inclure les rôles mixtes (ex: INF/AUX apparaît dans INF et dans AUX)
-                    const tasks = allDir.filter(d => d.role.includes(roleObj.code) || d.role === 'ALL');
-                    if (tasks.length > 0) {
-                        content += `<div style="margin-bottom: 20px; border: 2px solid #000; page-break-inside: avoid;"><h3 style="margin: 0; background: #e0e0e0; padding: 8px; font-size: 12pt; border-bottom: 1px solid #000; font-weight:bold;">${roleObj.title}</h3><table style="width: 100%; border-collapse: collapse; font-size: 10pt;">${tasks.map(t => `<tr><td style="border-bottom: 1px solid #ccc; padding: 6px; width: 25%; font-weight:bold; background:#f9f9f9;">${t.prob}</td><td style="border-bottom: 1px solid #ccc; padding: 6px;">${t.text}</td></tr>`).join('')}</table></div>`;
-                    }
-                });
-                content += `</div>`;
-            }
-            printArea.innerHTML = content;
-            window.print();
+            // Configuration de html2pdf
+            const element = document.createElement('div');
+            element.innerHTML = content;
+            
+            const opt = {
+                margin:       0.5,
+                filename:     'PTI_Expert_Document.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            // Génération
+            html2pdf().set(opt).from(element).save();
         }
 
         // --- NEW API SETTINGS LOGIC ---
