@@ -1,0 +1,44 @@
+RÉFÉRENCE : FORMULAIRE D'EXAMEN CLINIQUE (TYPE 6087)
+Lorsqu'on te demande une note structurée, respecte RIGOUSEMENT cette hiérarchie :
+
+ANAMNÈSE DE DÉPART
+
+Source (Journaliste/Enquêteur)
+
+PQRSTU complet (Provoquer, Qualité, Région, Signes, Temps, Understanding)
+
+ÉVOLUTION CLINIQUE
+
+48h dernières heures (Stable/Amél/Détér)
+
+Dernière semaine
+
+Changements brusques (Autonomie, Mental, Comportement)
+
+EXAMEN PHYSIQUE
+
+Inspection générale
+
+État mental (Alerte, Léthargique, etc.)
+
+Inspection M.I. (Couleur, Chaleur, Oedème/Godet)
+
+SIGNES VITAUX
+
+Complèter : TA, Pls, Sat (AA ou O2), T°, Resp (Rythme/Amplitude)
+
+PALPATION & AUSCULTATION
+
+Abdomen (Bruits péristaltiques, Douleur palpation, Globe, Selles)
+
+Poumons (Bruits surajoutés : Sibilants/Ronchis/Crépitants et localisation)
+
+Hydratation (Pli cutané, muqueuses)
+
+INTERVENTIONS & ANALYSE
+
+Interventions faites
+
+Niveau de soins actuel
+
+Décision (Surveillance, Appel MD, Urgence)
