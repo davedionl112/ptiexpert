@@ -20,8 +20,9 @@
     <!-- SheetJS (Pour Excel) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-    <!-- html2pdf.js (Pour générer le PDF) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- DOCX & FileSaver (Pour générer le Word) -->
+    <script src="https://unpkg.com/docx@7.1.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; }
@@ -78,7 +79,7 @@
             <div class="bg-teal-600 p-1.5 rounded"><i class="fa-solid fa-notes-medical text-white text-lg"></i></div>
             <div>
                 <h1 class="text-base font-bold leading-tight">PTI EXPERT <span class="text-teal-400">LONGUE DURÉE</span></h1>
-                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v3.3 PDF)</span></p>
+                <p class="text-[10px] text-slate-400">Assistant Clinique <span class="text-red-400 font-bold ml-1">(v3.4 DOCX)</span></p>
             </div>
         </div>
         <div class="flex items-center gap-3">
@@ -176,10 +177,10 @@
                     Générer Note Évolution (Basée sur PTI)
                 </button>
 
-                <!-- NEW PDF BUTTON -->
+                <!-- NEW WORD BUTTON -->
                 <div class="grid grid-cols-1 gap-3">
-                    <button onclick="downloadPDF()" class="bg-slate-800 hover:bg-slate-700 text-white py-3 px-4 rounded text-sm font-bold flex justify-center items-center gap-2 shadow transition-colors">
-                        <i class="fa-solid fa-file-pdf text-red-400"></i> Télécharger PTI (PDF)
+                    <button onclick="downloadDOCX()" class="bg-blue-800 hover:bg-blue-700 text-white py-3 px-4 rounded text-sm font-bold flex justify-center items-center gap-2 shadow transition-colors">
+                        <i class="fa-solid fa-file-word text-white"></i> Télécharger PTI (Word/DOCX)
                     </button>
                 </div>
             </div>
@@ -467,60 +468,113 @@
             });
         }
 
-        // --- PDF GENERATION LOGIC ---
-        function downloadPDF() {
+        // --- WORD/DOCX GENERATION LOGIC ---
+        function downloadDOCX() {
             const problems = Object.keys(currentPTI);
             if (problems.length === 0) return alert("Le panier PTI est vide.");
-            
-            // Construction du contenu HTML pour le PDF
-            // Note: On utilise des styles inline pour garantir le rendu dans html2pdf
-            let content = `
-                <div style="font-family: 'Arial', sans-serif; color: #333; padding: 20px;">
-                    <div style="border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
-                        <h1 style="font-size: 18pt; font-weight: bold; margin: 0; color: #000;">PLAN THÉRAPEUTIQUE INFIRMIER (PTI)</h1>
-                        <p style="margin: 5px 0 0 0; font-size: 10pt; color: #555;">Soins de Longue Durée - Document Clinique</p>
-                        <div style="margin-top:10px; font-size: 10pt;"><strong>Date:</strong> .............................. <strong>Heure:</strong> ............</div>
-                    </div>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
-                        <thead>
-                            <tr style="background-color: #f3f4f6;">
-                                <th style="border: 1px solid #999; padding: 10px; text-align: left; width: 35%; font-weight:bold;">CONSTATS (PQRSTU)</th>
-                                <th style="border: 1px solid #999; padding: 10px; text-align: left; width: 65%; font-weight:bold;">DIRECTIVES & SURVEILLANCE</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${problems.map(prob => `
-                                <tr>
-                                    <td style="border: 1px solid #999; padding: 10px; vertical-align: top; background-color: #fff;"><strong>${prob}</strong></td>
-                                    <td style="border: 1px solid #999; padding: 10px; vertical-align: top; background-color: #fff;">
-                                        <ul style="margin: 0; padding-left: 20px; list-style-type: disc;">
-                                            ${currentPTI[prob].map(d => `<li style="margin-bottom: 5px;">${d.text} <span style="font-size:8pt; font-weight:bold; color:#555;">[${d.role}]</span></li>`).join('')}
-                                        </ul>
-                                    </td>
-                                </tr>`).join('')}
-                        </tbody>
-                    </table>
-                    <div style="margin-top: 50px; font-size: 10pt; border-top:1px solid #333; padding-top:10px; display:flex; justify-content:space-between;">
-                        <div><strong>Signature infirmière:</strong> ............................................................................</div>
-                        <div><strong>Permis:</strong> ...................</div>
-                    </div>
-                    <div style="margin-top: 20px; font-size: 8pt; color: #999; text-align: center;">Généré par PTI Expert - Assistant Clinique</div>
-                </div>`;
 
-            // Configuration de html2pdf
-            const element = document.createElement('div');
-            element.innerHTML = content;
-            
-            const opt = {
-                margin:       0.5,
-                filename:     'PTI_Expert_Document.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
+            const { Document, Packer, Paragraph, Table, TableCell, TableRow, WidthType, TextRun, HeadingLevel, AlignmentType, BorderStyle } = docx;
 
-            // Génération
-            html2pdf().set(opt).from(element).save();
+            // Création des rangées du tableau
+            const rows = [
+                // En-tête du tableau
+                new TableRow({
+                    children: [
+                        new TableCell({
+                            children: [new Paragraph({ text: "CONSTATS (PQRSTU)", active: true, bold: true })],
+                            width: { size: 35, type: WidthType.PERCENTAGE },
+                            shading: { fill: "f3f4f6" }
+                        }),
+                        new TableCell({
+                            children: [new Paragraph({ text: "DIRECTIVES & SURVEILLANCE", active: true, bold: true })],
+                            width: { size: 65, type: WidthType.PERCENTAGE },
+                            shading: { fill: "f3f4f6" }
+                        }),
+                    ],
+                }),
+            ];
+
+            // Remplissage avec les données
+            for (const prob of problems) {
+                const directives = currentPTI[prob];
+                
+                // On crée une liste de Paragraphs pour la cellule de droite (une puce par directive)
+                const dirParagraphs = directives.map(d => 
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: d.text + " ", size: 22 }), // Texte normal (taille ~11pt)
+                            new TextRun({ text: `[${d.role}]`, bold: true, size: 18, color: "666666" }) // Badge rôle plus petit
+                        ],
+                        bullet: { level: 0 } // Style liste à puces
+                    })
+                );
+
+                rows.push(
+                    new TableRow({
+                        children: [
+                            new TableCell({
+                                children: [new Paragraph({ text: prob, bold: true })],
+                                width: { size: 35, type: WidthType.PERCENTAGE }
+                            }),
+                            new TableCell({
+                                children: dirParagraphs,
+                                width: { size: 65, type: WidthType.PERCENTAGE }
+                            }),
+                        ],
+                    })
+                );
+            }
+
+            // Création du Document
+            const doc = new Document({
+                sections: [{
+                    properties: {},
+                    children: [
+                        new Paragraph({
+                            text: "PLAN THÉRAPEUTIQUE INFIRMIER (PTI)",
+                            heading: HeadingLevel.HEADING_1,
+                            alignment: AlignmentType.CENTER,
+                            spacing: { after: 100 }
+                        }),
+                        new Paragraph({
+                            text: "Soins de Longue Durée - Document Clinique",
+                            alignment: AlignmentType.CENTER,
+                            spacing: { after: 400 }
+                        }),
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: "Date: ____________________  Heure: ________", bold: true })
+                            ],
+                            spacing: { after: 400 }
+                        }),
+                        new Table({
+                            rows: rows,
+                            width: { size: 100, type: WidthType.PERCENTAGE },
+                        }),
+                        new Paragraph({ text: "" }), // Espace
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: "\n\nSignature infirmière: __________________________________________________  Permis: ______________", bold: true })
+                            ],
+                            spacing: { before: 800 }
+                        }),
+                        new Paragraph({
+                            text: "Généré par PTI Expert - Assistant Clinique",
+                            alignment: AlignmentType.CENTER,
+                            spacing: { before: 400 },
+                            style: "gray" // Simple style hint
+                        })
+                    ],
+                }],
+            });
+
+            // Génération et Téléchargement
+            Packer.toBlob(doc).then(blob => {
+                saveAs(blob, "PTI_Expert_Document.docx");
+            }).catch(err => {
+                console.error(err);
+                alert("Erreur lors de la génération du fichier Word.");
+            });
         }
 
         // --- NEW API SETTINGS LOGIC ---
