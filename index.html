@@ -34,12 +34,14 @@
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
 
         .role-badge {
-            font-size: 0.60rem; padding: 2px 5px; border-radius: 4px; font-weight: 800; text-transform: uppercase; margin-right: 6px; display: inline-block; min-width: 35px; text-align: center;
+            font-size: 0.60rem; padding: 2px 5px; border-radius: 4px; font-weight: 800; text-transform: uppercase; margin-right: 6px; display: inline-block; min-width: 45px; text-align: center;
         }
         /* Role Colors */
         .role-pab { background-color: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; } 
         .role-aux { background-color: #fce7f3; color: #831843; border: 1px solid #f9a8d4; } 
         .role-inf { background-color: #dcfce7; color: #14532d; border: 1px solid #86efac; } 
+        .role-inf-aux { background-color: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; }
+        .role-aux-pab { background-color: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
         .role-all { background-color: #f1f5f9; color: #334151; border: 1px solid #cbd5e1; } 
         
         .typing-dot {
@@ -79,7 +81,7 @@
                 <div class="bg-teal-600 p-1 rounded text-xs"><i class="fa-solid fa-user-nurse text-white"></i></div>
                 <div>
                     <h1 class="text-sm font-bold leading-tight">STATION CLINIQUE <span class="text-teal-400">ASSISTANT</span></h1>
-                    <p class="text-[9px] text-slate-400">Outil d'aide à la décision & Documentation <span class="text-slate-500 font-bold ml-1">(v7.2 Sim+)</span></p>
+                    <p class="text-[9px] text-slate-400">Outil d'aide à la décision & Documentation <span class="text-slate-500 font-bold ml-1">(v7.3 Fix)</span></p>
                 </div>
             </div>
         </div>
@@ -129,7 +131,7 @@
                             <p class="text-xs text-slate-600 mt-1">Questions procédures et médicaments.</p>
                         </button>
                         
-                         <!-- Simulator (UPDATED) -->
+                         <!-- Simulator -->
                         <button onclick="navigateTo('sim')" class="dash-card p-4 rounded-lg border border-purple-100 bg-purple-50/50 hover:bg-purple-50 hover:shadow-md text-left group">
                              <div class="flex items-center justify-between mb-3">
                                 <i class="fa-solid fa-graduation-cap text-2xl text-purple-600 group-hover:scale-110 transition-transform"></i>
@@ -468,7 +470,7 @@
             
             // Save context
             simHistory.push({ role: "model", text: res });
-            simHistory.push({ role: "system_instruction", text: sysPrompt }); // On garde l'instruction en mémoire si on devait reconstruire le contexte
+            simHistory.push({ role: "system_instruction", text: sysPrompt }); 
 
             hideLoading();
             addSimBubble(res, 'ai');
@@ -484,8 +486,7 @@
             input.value = "";
             showLoading('output-sim');
 
-            // Build History Context for Continuity
-            // On concatène les échanges précédents pour que l'IA se souvienne du contexte
+            // Build History Context
             let conversationContext = simHistory.filter(h => h.role !== "system_instruction").map(h => `${h.role === 'user' ? 'INFIRMIER' : 'SIMULATEUR'}: ${h.text}`).join('\n');
             
             const prompt = `${conversationContext}\n\nINFIRMIER: ${val}\n\nSIMULATEUR (Réponds court, agis comme le patient ou donne le résultat clinique):`;
@@ -500,7 +501,6 @@
 
         async function debriefSimulation() {
             showLoading('output-sim');
-            // On demande le rapport final basé sur l'historique
             let conversationContext = simHistory.filter(h => h.role !== "system_instruction").map(h => `${h.role === 'user' ? 'INFIRMIER' : 'SIMULATEUR'}: ${h.text}`).join('\n');
             
             const prompt = `La simulation est terminée. Basé sur tous nos échanges ci-dessous, remplis le formulaire 6087 complet pour ce patient fictif.\n\nHISTORIQUE:\n${conversationContext}`;
@@ -589,44 +589,114 @@
 
         async function callGemini(prompt, specificContext) {
             const apiKey = localStorage.getItem('gemini_api_key');
-            if (!apiKey) { openSettings(); return "⚠️ Clé API manquante."; }
-            const fullSystem = `${loadedPrompts.global}\n\nCONTEXTE SPÉCIFIQUE:\n${specificContext}`;
+            if (!apiKey) { openSettings(); return "⚠️ Clé API manquante. Veuillez configurer la clé."; }
+            
+            // Sécurité si les fichiers externes n'ont pas fini de charger
+            const globalInst = loadedPrompts.global || FALLBACK_CONSIGNES;
+            const fullSystem = `${globalInst}\n\nCONTEXTE SPÉCIFIQUE:\n${specificContext}`;
+
             try {
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], systemInstruction: { parts: [{ text: fullSystem }] } })
+                    body: JSON.stringify({ 
+                        contents: [{ parts: [{ text: prompt }] }], 
+                        systemInstruction: { parts: [{ text: fullSystem }] } 
+                    })
                 });
+                
                 const data = await response.json();
-                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Erreur API.";
-            } catch (e) { return "Erreur connexion."; }
+                
+                if (data.error) {
+                    console.error("Gemini API Error:", data.error);
+                    return `⚠️ Erreur API (${data.error.code}): ${data.error.message}`;
+                }
+                
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Réponse vide reçue de l'IA.";
+
+            } catch (e) { 
+                console.error("Erreur de connexion:", e);
+                return "⚠️ Erreur de connexion (Vérifiez votre internet ou si un bloqueur est actif)."; 
+            }
         }
 
         function showLoading(id) { const el = document.getElementById(id); const l = document.createElement('div'); l.className="text-center py-4 loading-indicator"; l.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span>'; el.appendChild(l); el.scrollTop = el.scrollHeight; }
         function hideLoading() { document.querySelectorAll('.loading-indicator').forEach(e => e.remove()); }
         
+        // --- UPDATED GENERATE DIRECTIVES (Fix format & Roles) ---
         async function generateDirectives() {
             const text = document.getElementById('input-genpti').value;
             if(!text) return;
             const output = document.getElementById('output-genpti');
             output.innerHTML = "";
             showLoading('output-genpti');
-            const prompt = `CONSTAT: "${text}"\nGénère 3-5 directives PTI format: ROLE | Directive.`;
-            const res = await callGemini(prompt, "Générateur PTI.");
+
+            // STRICTER PROMPT FOR PARSING
+            const prompt = `CONSTAT/SITUATION: "${text}"\n\nGénère 3 à 5 directives infirmières pertinentes pour un PTI.
+            
+            FORMAT STRICT (Une directive par ligne) :
+            ROLE | Directive
+            
+            RÔLES AUTORISÉS UNIQUEMENT :
+            - INF
+            - AUX
+            - PAB
+            - INF/AUX
+            - AUX/PAB
+            
+            EXEMPLE DE RÉPONSE ATTENDUE :
+            INF | Évaluer la douleur Q4H
+            PAB | Aide à la marche x 1
+            INF/AUX | Surveiller état cutané
+            
+            IMPORTANT: Ne mets pas de tirets, pas de markdown, juste le texte brut.`;
+
+            const res = await callGemini(prompt, "Tu es un générateur de directives PTI. Respecte strictement le format demandé.");
+            hideLoading();
+            
             output.innerHTML = "";
-            res.split('\n').forEach(line => {
+            const lines = res.split('\n');
+            let found = false;
+            
+            lines.forEach(line => {
+                // Nettoyage agressif : ignore les lignes de tableau markdown
+                if(line.includes('---') || line.toLowerCase().includes('role | directive')) return;
+
                 if(line.includes('|')) {
                     const parts = line.split('|');
-                    const role = parts[0].trim().replace(/[*\[\]-]/g, ''); 
+                    // Clean unwanted characters like ** or spaces
+                    let role = parts[0].trim().replace(/[*\[\]-]/g, ''); 
                     const dir = parts[1].trim();
-                    const card = document.createElement('div');
-                    card.className = "gen-directive-card bg-white border border-slate-200 p-3 rounded mb-2 cursor-pointer shadow-sm flex items-start gap-3";
-                    card.innerHTML = `<div class="role-badge role-${role.toLowerCase()} mt-1">${role}</div><div class="flex-1 text-sm text-slate-700">${dir}</div><div class="text-teal-500"><i class="fa-solid fa-plus-circle"></i></div>`;
-                    card.onclick = () => { addDirective("Constat Généré", dir, role); card.classList.add('bg-teal-50'); };
-                    output.appendChild(card);
+                    
+                    // Normalize Roles (optional, but ensures CSS match)
+                    role = role.toUpperCase();
+                    
+                    if(role && dir) {
+                        found = true;
+                        const constLabel = text.length > 30 ? text.substring(0,30) + "..." : text;
+                        
+                        // Map specific CSS classes for new roles
+                        let roleClass = "role-all"; // Default
+                        if (role === "INF") roleClass = "role-inf";
+                        else if (role === "AUX") roleClass = "role-aux";
+                        else if (role === "PAB") roleClass = "role-pab";
+                        else if (role === "INF/AUX") roleClass = "role-inf-aux";
+                        else if (role === "AUX/PAB") roleClass = "role-aux-pab";
+
+                        const card = document.createElement('div');
+                        card.className = "gen-directive-card bg-white border border-slate-200 p-3 rounded mb-2 cursor-pointer shadow-sm transition-all flex items-start gap-3";
+                        card.innerHTML = `<div class="role-badge ${roleClass} mt-1">${role}</div><div class="flex-1 text-sm text-slate-700">${dir}</div><div class="text-teal-500"><i class="fa-solid fa-plus-circle"></i></div>`;
+                        card.onclick = () => { 
+                            addDirective("Constat Généré: " + constLabel, dir, role);
+                            card.classList.add('bg-teal-50', 'border-teal-200');
+                            card.innerHTML = `<div class="role-badge ${roleClass} mt-1">${role}</div><div class="flex-1 text-sm text-slate-700 italic line-through opacity-50">${dir}</div><div class="text-teal-600 font-bold text-xs">AJOUTÉ</div>`;
+                        };
+                        output.appendChild(card);
+                    }
                 }
             });
-            if(!output.hasChildNodes()) output.innerHTML = `<div class="p-4 text-sm">${marked.parse(res)}</div>`;
+            
+            if(!found) output.innerHTML = `<div class="p-4 bg-yellow-50 text-slate-700 text-sm border-l-4 border-yellow-400"><strong>Note:</strong> L'IA n'a pas respecté le format strict, voici la réponse brute :<br><br>${marked.parse(res)}</div>`;
         }
 
         async function generateMalaiseNote() {
