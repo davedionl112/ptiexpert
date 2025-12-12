@@ -414,6 +414,28 @@
             </div>
         </div>
     </div>
+    
+    <!-- DISCLAIMER MODAL -->
+    <div id="disclaimer-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-sm"></div>
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg p-8 relative z-10 border-l-8 border-yellow-500">
+            <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                <i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-3 text-2xl"></i>
+                MISE EN GARDE
+            </h2>
+            <div class="prose prose-sm text-slate-600 mb-6">
+                <p class="font-bold text-slate-800">USAGE PROFESSIONNEL & CONFIDENTIALITÉ</p>
+                <p>L'application <em>Station Clinique</em> est un outil d'aide à la décision assisté par l'intelligence artificielle. Elle ne remplace en aucun cas votre jugement clinique ni les guides de pratique officiels.</p>
+                <ul class="list-disc pl-5 space-y-1 mt-2">
+                    <li><strong>Responsabilité professionnelle :</strong> L'infirmier(ère) demeure entièrement responsable du contenu final versé au dossier. Validez toujours les suggestions avec les protocoles en vigueur.</li>
+                    <li><strong>Confidentialité absolue :</strong> Pour respecter les normes déontologiques, <strong>n'entrez JAMAIS de données nominatives</strong> (noms réels, numéros de dossier). Utilisez uniquement des données fictives.</li>
+                </ul>
+            </div>
+            <button onclick="closeDisclaimer()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-lg shadow-lg transition-transform hover:scale-[1.01] text-sm uppercase tracking-wide">
+                J'ai lu et je comprends mes responsabilités
+            </button>
+        </div>
+    </div>
 
     <script>
         // --- FALLBACKS ---
@@ -434,6 +456,10 @@
             if(storedKey) document.getElementById('api-key-input').value = storedKey;
             navigateTo('dashboard');
         });
+        
+        function closeDisclaimer() {
+            document.getElementById('disclaimer-modal').classList.add('hidden');
+        }
 
         async function loadExternalPrompts() {
             try {
