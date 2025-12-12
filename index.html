@@ -81,7 +81,7 @@
                 <div class="bg-teal-600 p-1 rounded text-xs"><i class="fa-solid fa-user-nurse text-white"></i></div>
                 <div>
                     <h1 class="text-sm font-bold leading-tight">STATION CLINIQUE <span class="text-teal-400">ASSISTANT</span></h1>
-                    <p class="text-[9px] text-slate-400">Outil d'aide à la décision & Documentation <span class="text-slate-500 font-bold ml-1">(v7.4 Fusion)</span></p>
+                    <p class="text-[9px] text-slate-400">Outil d'aide à la décision & Documentation <span class="text-slate-500 font-bold ml-1">(v7.5 Fixes)</span></p>
                 </div>
             </div>
         </div>
@@ -137,7 +137,8 @@
                                 <i class="fa-solid fa-graduation-cap text-2xl text-purple-600 group-hover:scale-110 transition-transform"></i>
                                 <span class="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Interactif</span>
                             </div>
-                            <h4 class="font-bold text-slate-800">Simulateur 6087</h4>
+                            <!-- RENOMMÉ -->
+                            <h4 class="font-bold text-slate-800">Simulateur Malaise Dominant</h4>
                             <p class="text-xs text-slate-600 mt-1">Entraînement clinique interactif.</p>
                         </button>
                         
@@ -146,8 +147,9 @@
                             <div class="flex items-center justify-between mb-3">
                                 <i class="fa-solid fa-file-medical-alt text-2xl text-teal-600 group-hover:scale-110 transition-transform"></i>
                             </div>
-                            <h4 class="font-bold text-slate-800">Note 6087</h4>
-                            <p class="text-xs text-slate-600 mt-1">Générateur de note structurée.</p>
+                            <!-- RENOMMÉ -->
+                            <h4 class="font-bold text-slate-800">Évaluation Malaise Dominant</h4>
+                            <p class="text-xs text-slate-600 mt-1">Générateur de note complète d'évaluation d'un malaise dominant.</p>
                         </button>
 
                         <!-- Guide -->
@@ -165,22 +167,13 @@
                                 <i class="fa-solid fa-pen-fancy text-2xl text-slate-600 group-hover:scale-110 transition-transform"></i>
                             </div>
                             <h4 class="font-bold text-slate-800">Rédacteur</h4>
-                            <p class="text-xs text-slate-600 mt-1">Reformulation de notes.</p>
+                            <!-- DESCRIPTION MISE À JOUR -->
+                            <p class="text-xs text-slate-600 mt-1">Reformulation en note abrégée.</p>
                         </button>
                     </div>
                 </div>
 
-                <!-- Zone B: PTI Access (Redirige maintenant vers GENPTI) -->
-                <button onclick="navigateTo('genpti')" class="w-full bg-slate-800 text-white p-6 rounded-xl shadow-lg border border-slate-700 hover:bg-slate-700 hover:shadow-xl transition-all group flex items-center justify-between relative overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-r from-teal-900/50 to-transparent pointer-events-none"></div>
-                    <div class="relative z-10 text-left">
-                        <h3 class="text-xl font-bold group-hover:text-teal-300 transition-colors">ACCÉDER À LA BANQUE & GÉNÉRATEUR</h3>
-                        <p class="text-slate-300 text-sm mt-1">Consultation, création et surveillance clinique (Tout-en-un).</p>
-                    </div>
-                    <div class="relative z-10 bg-slate-700 p-4 rounded-full group-hover:bg-teal-600 transition-colors border border-slate-600 group-hover:border-teal-400">
-                        <i class="fa-solid fa-arrow-right text-2xl"></i>
-                    </div>
-                </button>
+                <!-- Zone B: PTI Access SUPPRIMÉ -->
                 
                 <p class="text-center text-[10px] text-slate-400 mt-12 font-mono">Usage Professionnel - Confidentiel</p>
             </div>
@@ -231,15 +224,15 @@
                         </div>
                     </div>
 
-                    <!-- Filters -->
+                    <!-- Filters - CORRECTION FUNCTION NAMES HERE (renderLibrary instead of filterLib) -->
                     <div class="bg-white p-3 rounded-lg shadow-sm border border-slate-200 mb-4 flex flex-wrap gap-2 items-center sticky top-0 z-10">
                         <span class="text-[10px] uppercase font-bold text-slate-400 mr-2"><i class="fa-solid fa-filter mr-1"></i>Catégories:</span>
-                        <button class="filter-btn active bg-slate-800 text-white text-xs px-3 py-1.5 rounded font-bold transition-colors" onclick="filterLib('all', this)">Tout</button>
-                        <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('scpd', this)">SCPD</button>
-                        <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('soins', this)">Soins</button>
-                        <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('clinique', this)">Médical</button>
-                        <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('infection', this)">Infections</button>
-                        <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="filterLib('palliatif', this)">Palliatif</button>
+                        <button class="filter-btn active bg-slate-800 text-white text-xs px-3 py-1.5 rounded font-bold transition-colors" onclick="renderLibrary('all', this)">Tout</button>
+                        <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="renderLibrary('scpd', this)">SCPD</button>
+                        <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="renderLibrary('soins', this)">Soins</button>
+                        <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="renderLibrary('clinique', this)">Médical</button>
+                        <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="renderLibrary('infection', this)">Infections</button>
+                        <button class="filter-btn bg-white text-slate-600 border border-slate-300 text-xs px-3 py-1.5 rounded font-bold hover:bg-slate-50" onclick="renderLibrary('palliatif', this)">Palliatif</button>
                     </div>
 
                     <!-- Grid Container -->
@@ -308,7 +301,8 @@
              <div class="bg-purple-50 p-4 border-b border-purple-100 flex justify-between items-center">
                 <div class="flex items-center gap-2 text-purple-800">
                     <i class="fa-solid fa-graduation-cap text-xl"></i>
-                    <h2 class="font-bold text-lg">Simulateur Interactif</h2>
+                    <!-- RENOMMÉ -->
+                    <h2 class="font-bold text-lg">Simulateur Malaise Dominant</h2>
                 </div>
                 <button onclick="debriefSimulation()" id="btn-debrief" class="hidden bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-1.5 rounded uppercase shadow-sm">
                     <i class="fa-solid fa-file-contract mr-1"></i> Terminer & Rapport 6087
@@ -354,7 +348,8 @@
             <div class="bg-teal-50 p-4 border-b border-teal-100 flex justify-between items-center">
                 <div class="flex items-center gap-2 text-teal-800">
                     <i class="fa-solid fa-file-medical-alt text-xl"></i>
-                    <h2 class="font-bold text-lg">Note Structurée (6087)</h2>
+                    <!-- RENOMMÉ -->
+                    <h2 class="font-bold text-lg">Évaluation Malaise Dominant</h2>
                 </div>
                 <button onclick="copyContent('output-malaise')" class="text-teal-600 hover:text-teal-800 text-xs font-bold uppercase"><i class="fa-regular fa-copy mr-1"></i> Copier</button>
             </div>
