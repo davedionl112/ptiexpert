@@ -506,6 +506,7 @@
             1. Génère un patient fictif avec des données médicales cohérentes (Vitaux, Symptômes, Histoire) mais NE LES RÉVÈLE PAS TOUT DE SUITE. Garde-les en mémoire "cachée".
             2. Agis comme le patient (réponds aux questions) OU comme les instruments (donne le résultat si l'infirmier dit "Je prends la tension").
             3. Si l'utilisateur demande quelque chose d'impossible ou d'illogique, dis-le.
+            4. IMPORTANT : Tu es un outil de simulation. N'affiche JAMAIS le bloc d'alerte clinique rouge destiné au coach. Reste immergé dans la simulation.
             
             DÉMARRAGE:
             Donne SEULEMENT une courte mise en situation (1 ou 2 phrases max) pour commencer l'interaction (ex: "La préposée t'appelle car...").
@@ -535,7 +536,7 @@
             // Build History Context
             let conversationContext = simHistory.filter(h => h.role !== "system_instruction").map(h => `${h.role === 'user' ? 'INFIRMIER' : 'SIMULATEUR'}: ${h.text}`).join('\n');
             
-            const prompt = `${conversationContext}\n\nINFIRMIER: ${val}\n\nSIMULATEUR (Réponds court, agis comme le patient ou donne le résultat clinique):`;
+            const prompt = `${conversationContext}\n\nINFIRMIER: ${val}\n\nSIMULATEUR (Réponds court, agis comme le patient ou donne le résultat clinique. Ne donne PAS d'alerte clinique rouge):`;
 
             const res = await callGemini(prompt, "Tu es un simulateur de patient. Reste dans le personnage. Ne donne pas le diagnostic final, laisse l'infirmier chercher.");
             
