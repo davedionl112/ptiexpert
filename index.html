@@ -80,8 +80,8 @@
             <div class="flex items-center gap-2">
                 <div class="bg-teal-600 p-1 rounded text-xs"><i class="fa-solid fa-user-nurse text-white"></i></div>
                 <div>
-                    <h1 class="text-sm font-bold leading-tight">STATION CLINIQUE <span class="text-teal-400">ASSISTANT CHSLD</span></h1>
-                    <p class="text-[9px] text-slate-400">Outil d'aide à la décision & Documentation <span class="text-slate-500 font-bold ml-1">(v7.5 Fixes)</span></p>
+                    <h1 class="text-sm font-bold leading-tight">STATION CLINIQUE <span class="text-teal-400">ASSISTANT</span></h1>
+                    <p class="text-[9px] text-slate-400">Outil d'aide à la décision & Documentation <span class="text-slate-500 font-bold ml-1">(v7.6 Fixes)</span></p>
                 </div>
             </div>
         </div>
@@ -445,6 +445,7 @@
         let database = []; 
         let currentPTI = {};
         let loadedPrompts = { global: "", form6087: "" };
+        let currentView = 'dashboard';
         
         // Sim State
         let simHistory = [];
@@ -469,6 +470,7 @@
         }
 
         function navigateTo(viewName) {
+            currentView = viewName;
             document.querySelectorAll('.tool-view').forEach(el => el.classList.remove('active'));
             const target = document.getElementById('view-' + viewName);
             if(target) {
@@ -638,7 +640,19 @@
             
             // Sécurité si les fichiers externes n'ont pas fini de charger
             const globalInst = loadedPrompts.global || FALLBACK_CONSIGNES;
-            const fullSystem = `${globalInst}\n\nCONTEXTE SPÉCIFIQUE:\n${specificContext}`;
+            
+            // --- AJOUT DE LA LOGIQUE DE SÉCURITÉ CIBLÉE ---
+            let safetyBlock = "";
+            if (['coach', 'malaise', 'guide'].includes(currentView)) {
+                safetyBlock = `
+SÉCURITÉ ET ALERTES (RED FLAGS) :
+Si tu détectes des signes d'instabilité majeure dans les données fournies (ex: Sat < 88%, Hypotension sévère, Altération brusque de l'état de conscience, Signes d'AVC, Détresse respiratoire, Idées suicidaires imminentes), tu DOIS commencer ta réponse par cet exact bloc HTML :
+
+<div class="bg-red-50 border-l-4 border-red-500 p-2 mb-4 text-red-700 font-bold text-xs"><i class="fa-solid fa-triangle-exclamation mr-1"></i> ALERTE CLINIQUE : Critères d'instabilité détectés. Terminer votre collecte de données, valider niveau de soins et aviser MD.</div>
+                `;
+            }
+
+            const fullSystem = `${globalInst}\n\n${safetyBlock}\n\nCONTEXTE SPÉCIFIQUE:\n${specificContext}`;
 
             try {
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`, {
