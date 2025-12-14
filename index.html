@@ -66,6 +66,13 @@
         /* Simulation Chat Bubbles */
         .sim-bubble-ai { background-color: #f3e8ff; border: 1px solid #d8b4fe; border-radius: 12px 12px 12px 0; padding: 10px; margin-bottom: 8px; max-width: 85%; align-self: flex-start; }
         .sim-bubble-user { background-color: #7e22ce; color: white; border-radius: 12px 12px 0 12px; padding: 10px; margin-bottom: 8px; max-width: 85%; align-self: flex-end; margin-left: auto; }
+
+        /* Style spécifique pour les tables PTI dans le panneau latéral */
+        .pti-section-title { font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-top: 1rem; margin-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+        .pti-mini-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        .pti-mini-table th { text-align: left; background-color: #f1f5f9; padding: 4px; color: #475569; font-weight: 700; border: 1px solid #e2e8f0; }
+        .pti-mini-table td { padding: 6px 4px; border: 1px solid #e2e8f0; vertical-align: top; }
+        .pti-mini-table tr:nth-child(even) { background-color: #fafafa; }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden bg-slate-50">
@@ -80,8 +87,8 @@
             <div class="flex items-center gap-2">
                 <div class="bg-teal-600 p-1 rounded text-xs"><i class="fa-solid fa-user-nurse text-white"></i></div>
                 <div>
-                    <h1 class="text-sm font-bold leading-tight">STATION CLINIQUE <span class="text-teal-400">ASSISTANT SOINS DE LONGUE DURÉE</span></h1>
-                    <p class="text-[9px] text-slate-400">Outil d'aide à la décision & Documentation <span class="text-slate-500 font-bold ml-1">(v7.7 Fixes)</span></p>
+                    <h1 class="text-sm font-bold leading-tight">STATION CLINIQUE <span class="text-teal-400">ASSISTANT</span></h1>
+                    <p class="text-[9px] text-slate-400">Outil d'aide à la décision & Documentation <span class="text-slate-500 font-bold ml-1">(v7.8 Structure PTI)</span></p>
                 </div>
             </div>
         </div>
@@ -246,7 +253,7 @@
                 <div class="p-4 bg-slate-800 text-white flex justify-between items-center shadow-md flex-none">
                     <div>
                         <h3 class="font-bold text-sm uppercase"><i class="fa-solid fa-file-signature mr-2"></i> Panier PTI</h3>
-                        <p class="text-[10px] text-slate-300">Prévisualisation</p>
+                        <p class="text-[10px] text-slate-300">Prévisualisation Structurée</p>
                     </div>
                     <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
                 </div>
@@ -255,11 +262,35 @@
                         <i class="fa-solid fa-folder-plus text-6xl mb-4 text-slate-200"></i>
                         <p class="text-sm font-bold">Panier vide</p>
                     </div>
-                    <div id="pti-visual-table" class="hidden">
-                        <table class="pti-table shadow-sm">
-                            <thead><tr><th style="width: 30%;">CONSTATS</th><th style="width: 70%;">DIRECTIVES</th></tr></thead>
-                            <tbody id="pti-table-body"></tbody>
-                        </table>
+                    <!-- CONTENU DYNAMIQUE ICI -->
+                    <div id="pti-tables-container" class="hidden space-y-6">
+                        <!-- Table 1: Constats -->
+                        <div>
+                            <h4 class="pti-section-title">1. Constats de l'évaluation</h4>
+                            <table class="pti-mini-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:10%">N°</th>
+                                        <th style="width:90%">Problèmes ou besoins prioritaires</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pti-constats-body"></tbody>
+                            </table>
+                        </div>
+                        <!-- Table 2: Directives -->
+                        <div>
+                            <h4 class="pti-section-title">2. Suivi Clinique (Directives)</h4>
+                            <table class="pti-mini-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:10%">N°</th>
+                                        <th style="width:70%">Directive infirmière</th>
+                                        <th style="width:20%">Rôle</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pti-directives-body"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
                 <div class="p-4 bg-slate-50 border-t border-slate-200 flex-none space-y-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
@@ -648,27 +679,75 @@
             }
         }
 
+        // --- NOUVELLE FONCTION SIDEBAR STRUCTURÉE ---
         function updateSidebar() {
-            const tbody = document.getElementById('pti-table-body');
-            tbody.innerHTML = '';
-            Object.keys(currentPTI).forEach(p => {
-                const dirs = currentPTI[p].map((d,i) => `<div class="flex justify-between border-b border-dashed border-slate-100 p-1 text-xs"><span><b class="text-[9px] mr-1">[${d.role}]</b>${d.text}</span><i class="fa-solid fa-trash text-slate-300 hover:text-red-500 cursor-pointer" onclick="removeDirective('${p}',${i})"></i></div>`).join('');
-                tbody.innerHTML += `<tr><td class="font-bold text-xs bg-slate-50">${p}</td><td>${dirs}</td></tr>`;
+            const constatsBody = document.getElementById('pti-constats-body');
+            const directivesBody = document.getElementById('pti-directives-body');
+            const container = document.getElementById('pti-tables-container');
+            const emptyState = document.getElementById('empty-state');
+            
+            constatsBody.innerHTML = '';
+            directivesBody.innerHTML = '';
+            
+            const problems = Object.keys(currentPTI);
+            
+            if (problems.length === 0) {
+                emptyState.classList.remove('hidden');
+                container.classList.add('hidden');
+                document.getElementById('pti-badge-float').classList.add('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            container.classList.remove('hidden');
+            document.getElementById('pti-badge-float').classList.remove('hidden');
+            document.getElementById('pti-badge-float').innerText = Object.values(currentPTI).flat().length;
+
+            let probIndex = 1;
+            problems.forEach(prob => {
+                // Ajout au tableau des constats
+                constatsBody.innerHTML += `
+                    <tr>
+                        <td><strong>${probIndex}</strong></td>
+                        <td>${prob} <i class="fa-solid fa-trash text-slate-300 hover:text-red-500 cursor-pointer ml-2 text-[10px]" onclick="removeProblem('${prob.replace(/'/g, "\\'")}')" title="Supprimer tout le constat"></i></td>
+                    </tr>
+                `;
+
+                // Ajout au tableau des directives
+                const directives = currentPTI[prob];
+                directives.forEach((d, i) => {
+                    const roleClass = `role-${d.role.toLowerCase().replace('/','-')}`;
+                    directivesBody.innerHTML += `
+                        <tr>
+                            <td><strong>${probIndex}</strong></td>
+                            <td>${d.text} <i class="fa-solid fa-trash text-slate-300 hover:text-red-500 cursor-pointer ml-1 text-[10px]" onclick="removeDirective('${prob.replace(/'/g, "\\'")}',${i})"></i></td>
+                            <td><span class="role-badge ${roleClass}">${d.role}</span></td>
+                        </tr>
+                    `;
+                });
+                probIndex++;
             });
-            document.getElementById('pti-visual-table').classList.remove('hidden');
-            document.getElementById('empty-state').classList.add('hidden');
         }
-        function removeDirective(p,i) { currentPTI[p].splice(i,1); if(currentPTI[p].length===0) delete currentPTI[p]; updateSidebar(); }
+
+        function removeDirective(p,i) { 
+            currentPTI[p].splice(i,1); 
+            if(currentPTI[p].length===0) delete currentPTI[p]; 
+            updateSidebar(); 
+        }
+
+        function removeProblem(p) {
+            delete currentPTI[p];
+            updateSidebar();
+        }
+
         function toggleSidebar() { document.getElementById('pti-sidebar').classList.toggle('translate-x-full'); }
 
         async function callGemini(prompt, specificContext) {
             const apiKey = localStorage.getItem('gemini_api_key');
             if (!apiKey) { openSettings(); return "⚠️ Clé API manquante. Veuillez configurer la clé."; }
             
-            // Sécurité si les fichiers externes n'ont pas fini de charger
             const globalInst = loadedPrompts.global || FALLBACK_CONSIGNES;
             
-            // --- AJOUT DE LA LOGIQUE DE SÉCURITÉ CIBLÉE ---
             let safetyBlock = "";
             if (['coach', 'malaise', 'guide'].includes(currentView)) {
                 safetyBlock = `
@@ -745,24 +824,18 @@ Si tu détectes des signes d'instabilité majeure dans les données fournies (ex
             let found = false;
             
             lines.forEach(line => {
-                // Nettoyage agressif : ignore les lignes de tableau markdown
                 if(line.includes('---') || line.toLowerCase().includes('role | directive')) return;
 
                 if(line.includes('|')) {
                     const parts = line.split('|');
-                    // Clean unwanted characters like ** or spaces
                     let role = parts[0].trim().replace(/[*\[\]-]/g, ''); 
                     const dir = parts[1].trim();
-                    
-                    // Normalize Roles (optional, but ensures CSS match)
                     role = role.toUpperCase();
                     
                     if(role && dir) {
                         found = true;
                         const constLabel = text.length > 30 ? text.substring(0,30) + "..." : text;
-                        
-                        // Map specific CSS classes for new roles
-                        let roleClass = "role-all"; // Default
+                        let roleClass = "role-all"; 
                         if (role === "INF") roleClass = "role-inf";
                         else if (role === "AUX") roleClass = "role-aux";
                         else if (role === "PAB") roleClass = "role-pab";
@@ -770,12 +843,13 @@ Si tu détectes des signes d'instabilité majeure dans les données fournies (ex
                         else if (role === "AUX/PAB") roleClass = "role-aux-pab";
 
                         const card = document.createElement('div');
-                        card.className = "gen-directive-card bg-white border border-slate-200 p-3 rounded mb-2 cursor-pointer shadow-sm transition-all flex items-start gap-3";
-                        card.innerHTML = `<div class="role-badge ${roleClass} mt-1">${role}</div><div class="flex-1 text-sm text-slate-700">${dir}</div><div class="text-teal-500"><i class="fa-solid fa-plus-circle"></i></div>`;
+                        card.className = "gen-directive-card bg-white border border-slate-200 p-3 rounded mb-2 cursor-pointer shadow-sm transition-all flex items-start gap-3 group";
+                        card.innerHTML = `<div class="role-badge ${roleClass} mt-1">${role}</div><div class="flex-1 text-sm text-slate-700">${dir}</div><div class="text-teal-500 opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-plus-circle"></i></div>`;
                         card.onclick = () => { 
                             addDirective("Constat Généré: " + constLabel, dir, role);
                             card.classList.add('bg-teal-50', 'border-teal-200');
                             card.innerHTML = `<div class="role-badge ${roleClass} mt-1">${role}</div><div class="flex-1 text-sm text-slate-700 italic line-through opacity-50">${dir}</div><div class="text-teal-600 font-bold text-xs">AJOUTÉ</div>`;
+                            card.onclick = null;
                         };
                         output.appendChild(card);
                     }
@@ -827,18 +901,90 @@ Si tu détectes des signes d'instabilité majeure dans les données fournies (ex
         function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); document.getElementById('settings-modal').classList.remove('flex'); }
         function saveApiKey() { localStorage.setItem('gemini_api_key', document.getElementById('api-key-input').value); closeSettings(); }
         
+        // --- NOUVELLE FONCTION WORD STRUCTURÉE ---
         function downloadDOCX() {
              const problems = Object.keys(currentPTI);
             if (problems.length === 0) return alert("Le panier PTI est vide.");
-            const { Document, Packer, Paragraph, Table, TableCell, TableRow, WidthType, TextRun, HeadingLevel, AlignmentType } = docx;
-            const rows = [ new TableRow({ children: [ new TableCell({ children: [new Paragraph({ text: "CONSTATS", bold: true })], width: { size: 35, type: WidthType.PERCENTAGE }, shading: { fill: "f3f4f6" } }), new TableCell({ children: [new Paragraph({ text: "DIRECTIVES", bold: true })], width: { size: 65, type: WidthType.PERCENTAGE }, shading: { fill: "f3f4f6" } }) ] }) ];
+            const { Document, Packer, Paragraph, Table, TableCell, TableRow, WidthType, TextRun, HeadingLevel, AlignmentType, BorderStyle } = docx;
+
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.getHours() + "h" + now.getMinutes();
+
+            // TABLEAU 1: CONSTATS
+            const constatsRows = [
+                new TableRow({
+                    children: [
+                        new TableCell({ children: [new Paragraph({ text: "Date", bold: true, size: 18 })], width: { size: 15, type: WidthType.PERCENTAGE }, shading: { fill: "f3f4f6" } }),
+                        new TableCell({ children: [new Paragraph({ text: "Heure", bold: true, size: 18 })], width: { size: 10, type: WidthType.PERCENTAGE }, shading: { fill: "f3f4f6" } }),
+                        new TableCell({ children: [new Paragraph({ text: "N°", bold: true, size: 18 })], width: { size: 5, type: WidthType.PERCENTAGE }, shading: { fill: "f3f4f6" } }),
+                        new TableCell({ children: [new Paragraph({ text: "Problèmes ou besoins prioritaires", bold: true, size: 18 })], width: { size: 55, type: WidthType.PERCENTAGE }, shading: { fill: "f3f4f6" } }),
+                        new TableCell({ children: [new Paragraph({ text: "Initiales", bold: true, size: 18 })], width: { size: 15, type: WidthType.PERCENTAGE }, shading: { fill: "f3f4f6" } }),
+                    ]
+                })
+            ];
+
+            // TABLEAU 2: SUIVI CLINIQUE (DIRECTIVES)
+            const directivesRows = [
+                new TableRow({
+                    children: [
+                        new TableCell({ children: [new Paragraph({ text: "Date", bold: true, size: 18 })], width: { size: 15, type: WidthType.PERCENTAGE }, shading: { fill: "f3f4f6" } }),
+                        new TableCell({ children: [new Paragraph({ text: "Heure", bold: true, size: 18 })], width: { size: 10, type: WidthType.PERCENTAGE }, shading: { fill: "f3f4f6" } }),
+                        new TableCell({ children: [new Paragraph({ text: "N°", bold: true, size: 18 })], width: { size: 5, type: WidthType.PERCENTAGE }, shading: { fill: "f3f4f6" } }),
+                        new TableCell({ children: [new Paragraph({ text: "Directive infirmière", bold: true, size: 18 })], width: { size: 55, type: WidthType.PERCENTAGE }, shading: { fill: "f3f4f6" } }),
+                        new TableCell({ children: [new Paragraph({ text: "Initiales", bold: true, size: 18 })], width: { size: 15, type: WidthType.PERCENTAGE }, shading: { fill: "f3f4f6" } }),
+                    ]
+                })
+            ];
+
+            let index = 1;
             for (const prob of problems) {
+                // Row Constat
+                constatsRows.push(new TableRow({
+                    children: [
+                        new TableCell({ children: [new Paragraph({ text: dateStr, size: 18 })] }),
+                        new TableCell({ children: [new Paragraph({ text: timeStr, size: 18 })] }),
+                        new TableCell({ children: [new Paragraph({ text: index.toString(), size: 18, bold: true })] }),
+                        new TableCell({ children: [new Paragraph({ text: prob, size: 20, bold: true })] }),
+                        new TableCell({ children: [new Paragraph({ text: "", size: 18 })] }),
+                    ]
+                }));
+
+                // Rows Directives
                 const directives = currentPTI[prob];
-                const dirParagraphs = directives.map(d => new Paragraph({ children: [ new TextRun({ text: d.text + " ", size: 22 }), new TextRun({ text: `[${d.role}]`, bold: true, size: 18, color: "666666" }) ], bullet: { level: 0 } }));
-                rows.push(new TableRow({ children: [ new TableCell({ children: [new Paragraph({ text: prob, bold: true })], width: { size: 35, type: WidthType.PERCENTAGE } }), new TableCell({ children: dirParagraphs, width: { size: 65, type: WidthType.PERCENTAGE } }) ] }));
+                for (const d of directives) {
+                    directivesRows.push(new TableRow({
+                        children: [
+                            new TableCell({ children: [new Paragraph({ text: dateStr, size: 18 })] }),
+                            new TableCell({ children: [new Paragraph({ text: timeStr, size: 18 })] }),
+                            new TableCell({ children: [new Paragraph({ text: index.toString(), size: 18, bold: true })] }),
+                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: d.text + " ", size: 20 }), new TextRun({ text: `[${d.role}]`, size: 16, bold: true, color: "666666" })] })] }),
+                            new TableCell({ children: [new Paragraph({ text: "", size: 18 })] }),
+                        ]
+                    }));
+                }
+                index++;
             }
-            const doc = new Document({ sections: [{ children: [ new Paragraph({ text: "PLAN THÉRAPEUTIQUE INFIRMIER", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER, spacing: { after: 100 } }), new Table({ rows: rows, width: { size: 100, type: WidthType.PERCENTAGE } }) ] }] });
-            Packer.toBlob(doc).then(blob => { saveAs(blob, "PTI.docx"); });
+
+            const doc = new Document({
+                sections: [{
+                    children: [
+                        new Paragraph({ text: "PLAN THÉRAPEUTIQUE INFIRMIER (PTI)", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER, spacing: { after: 300 } }),
+                        
+                        new Paragraph({ text: "1. CONSTATS DE L'ÉVALUATION", heading: HeadingLevel.HEADING_3, spacing: { before: 200, after: 100 } }),
+                        new Table({ rows: constatsRows, width: { size: 100, type: WidthType.PERCENTAGE } }),
+                        
+                        new Paragraph({ text: "", spacing: { before: 400 } }), // Espace
+
+                        new Paragraph({ text: "2. SUIVI CLINIQUE (DIRECTIVES)", heading: HeadingLevel.HEADING_3, spacing: { before: 200, after: 100 } }),
+                        new Table({ rows: directivesRows, width: { size: 100, type: WidthType.PERCENTAGE } }),
+                        
+                        new Paragraph({ text: "Document généré par Station Clinique Assistant", size: 16, alignment: AlignmentType.CENTER, spacing: { before: 600 }, color: "888888" })
+                    ]
+                }]
+            });
+
+            Packer.toBlob(doc).then(blob => { saveAs(blob, "PTI_Complet.docx"); });
         }
     </script>
 </body>
