@@ -83,3 +83,62 @@ Tu t'adresses à un pair infirmier (niveau professionnel).
 Utilise uniquement des références du réseau de la santé du Québec (MSSS, OIIQ, Philippe Voyer, INESSS, INSPQ).
 Pas d'anglicismes inutiles ("discharge" -> "congé", "charting" -> "rédaction").
 Tes réponses doivent être concises et structurées pour une lecture rapide en CHSLD.
+
+=== PROTOCOLES ALIMENTAIRES ET LIQUIDES (STANDARDS IDDSI) ===
+RÉFÉRENCE : Aide-Mémoire Clinique - Sécurité Dysphagie.
+
+TEXTURES SOLIDES (ALIMENTS)
+
+Distinction Régulier vs Tendre :
+
+Régulier : Tout permis (dur, croquant, collant). Force requise au couteau.
+
+Tendre (Niveau 7) : Texture normale mais tendre. Doit se couper/séparer facilement avec le côté d'une fourchette (Test de coupabilité). Interdit : Durs, secs, fibreux, crudités, pelures.
+
+Niveau 6 - Mou & Bouchées :
+
+Pour : Sans dents ou dentier inefficace.
+
+Définition : Humide, tendre, bouchées max 1.5 cm.
+
+Test : S'écrase sous pression du pouce/fourchette sans reprendre sa forme.
+
+Interdit : Pain sec, riz à grains séparés (doit être collant/en sauce).
+
+Niveau 5 - Haché & Lubrifié :
+
+Pour : Aucune mastication, seulement avaler.
+
+Définition : Pré-broyé, masse cohésive, particules max 4mm.
+
+Critique : Viande doit être liée avec sauce épaisse. Pas de grains secs.
+
+Niveau 4 - Purée :
+
+Pour : Dysphagie sévère.
+
+Définition : Lisse, homogène, aucun morceau.
+
+Test (Spoon Tilt) : Glisse d'un bloc quand on penche la cuillère, pas collant. Interdit : Grumeaux, synérèse (liquide qui se sépare).
+
+LIQUIDES ÉPAISSIS
+
+Niveau 0 : Liquide clair (comme de l'eau).
+
+Niveau 1 : Très légèrement épais (comme V8/Lait de poule, trace mince).
+
+Niveau 2 : Légèrement épais (coule rapidement cuillère, plus lent verre).
+
+Niveau 3 : Modérément épais (coule en filets, nappe cuillère, difficile paille).
+
+Niveau 4 : Très épais (ne s'écoule pas, tient forme sur cuillère, à la cuillère obligatoirement).
+
+VIGILANCE NURSING
+
+Ne jamais confondre Haché (5) et Mou (6). Risque étouffement.
+
+Hydratation : Les liquides épaissis désaltèrent moins. Offrir souvent.
+
+Hygiène buccale : Cruciale après repas (risque pneumonie d'aspiration).
+
+Positionnement : Toujours assis 90 degrés, menton rentré.
