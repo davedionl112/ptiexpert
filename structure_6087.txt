@@ -1,44 +1,174 @@
-RÉFÉRENCE : FORMULAIRE D'EXAMEN CLINIQUE
-Lorsqu'on te demande une note structurée, respecte RIGOUSEMENT cette hiérarchie :
+RÉFÉRENCE : FORMULAIRE D'EXAMEN CLINIQUE (DT6087)
+Lorsqu'on te demande une note structurée 6087, respecte RIGOUREUSEMENT cette hiérarchie et ces éléments. Si une donnée n'est pas disponible, indique "Non évalué" ou "N/A".
 
-ANAMNÈSE DE DÉPART
+IDENTIFICATION & ANAMNÈSE DE DÉPART
 
-Source (Journaliste/Enquêteur)
+Malaise dominant : (Préciser)
 
-PQRSTU complet (Provoquer, Qualité, Région, Signes, Temps, Understanding)
+Date et Heure du début :
 
-ÉVOLUTION CLINIQUE
+Source de l'information : (Journaliste / Enquêteur)
 
-48h dernières heures (Stable/Amél/Détér)
+PQRSTU Complet :
 
-Dernière semaine
+P (Provoquer/Pallier) :
 
-Changements brusques (Autonomie, Mental, Comportement)
+Q (Qualité/Quantité) :
 
-EXAMEN PHYSIQUE
+R (Région/Irradiation) :
 
-Inspection générale
+S (Signes/Symptômes associés) :
 
-État mental (Alerte, Léthargique, etc.)
+T (Temps/Intermittence) :
 
-Inspection M.I. (Couleur, Chaleur, Oedème/Godet)
+U (Understanding/Compréhension du patient) :
 
-SIGNES VITAUX
+ÉVOLUTION CLINIQUE (CONTEXTE)
 
-Complèter : TA, Pls, Sat (AA ou O2), T°, Resp (Rythme/Amplitude)
+Évolution du malaise (48 dernières heures) : (Stable / Amélioration / Détérioration)
 
-PALPATION & AUSCULTATION
+Évolution du malaise (Dernière semaine) : (Stable / Amélioration / Détérioration)
 
-Abdomen (Bruits péristaltiques, Douleur palpation, Globe, Selles)
+État général (Dernière semaine) : (Stable / Amélioration / Détérioration)
 
-Poumons (Bruits surajoutés : Sibilants/Ronchis/Crépitants et localisation)
+Symptômes associés :
 
-Hydratation (Pli cutané, muqueuses)
+Difficulté respiratoire : (Oui/Non)
+
+Douleur : (Oui/Non - Intensité, Localisation, Échelle)
+
+CHANGEMENTS BRUSQUES (< 1 semaine) :
+
+Perte d'autonomie : (Oui/Non)
+
+Changement état mental : (Oui/Non)
+
+Changement comportement : (Oui/Non)
+
+EXAMEN PHYSIQUE - INSPECTION GÉNÉRALE
+
+État Mental :
+
+Attention : (Attentive / Non attentive)
+
+Conscience : (Hyper alerte / Alerte / Diminué / Léthargique / Comateux / Stuporeux)
+
+Peau :
+
+Coloration : (Normale / Cyanosée / Blanchâtre / Grisâtre)
+
+Retour capillaire général : (Normal / Anormal)
+
+EXAMEN PHYSIQUE - MEMBRES INFÉRIEURS (M.I.)
+
+Jambe Droite :
+
+Couleur/Chaleur :
+
+Mobilité/Sensibilité :
+
+Pouls/Retour capillaire :
+
+Œdème : (Oui/Non - Si oui : Localisation, Godet cm, Temps résorption)
+
+Jambe Gauche :
+
+Couleur/Chaleur :
+
+Mobilité/Sensibilité :
+
+Pouls/Retour capillaire :
+
+Œdème : (Oui/Non - Si oui : Localisation, Godet cm, Temps résorption)
+
+SIGNES VITAUX & RESPIRATOIRE
+
+Saturométrie : (% Air ambiant ou avec O2 L/min)
+
+Pouls : (BPM, Régulier/Irrégulier)
+
+P.A. : (mmHg)
+
+Température : (°C - Rectal/Buccal/Axillaire) Note: Fièvre gériatrique ≥37.8°C ou +1.1°C base
+
+Respiration :
+
+Fréquence : (cpm)
+
+Rythme : (Régulier / Irrégulier)
+
+Type : (Thoracique / Abdominal)
+
+Amplitude : (Normale / Profonde / Superficielle)
+
+Tirage : (Oui/Non - Localisation)
+
+Orthopnée : (Oui/Non)
+
+Expectorations : (Oui/Non - Coloration)
+
+PALPATION, AUSCULTATION & HYDRATATION
+
+Signes de déshydratation :
+
+Langue humide : (Oui/Non)
+
+Filet de salive sous la langue : (Oui/Non)
+
+Aisselle humide : (Oui/Non)
+
+Pli cutané (Sternal/Frontal) : (Normal/Anormal)
+
+Abdomen :
+
+Bruits péristaltiques : (/min)
+
+Douleur palpation superficielle : (Oui/Non - Cadran)
+
+Douleur palpation profonde : (Oui/Non - Cadran)
+
+Globe vésical : (Oui/Non)
+
+Selles au toucher rectal : (Oui/Non)
+
+Poumons (Auscultation post. bases min.) :
+
+Bruits anormaux : (Oui/Non - Sibilants / Crépitants / Ronchis)
+
+Localisation : (Bronche D/G, Lobes, Face Ant/Post)
+
+INFORMATIONS COMPLÉMENTAIRES & RISQUES
+
+Antécédents pertinents (Lien avec situation) :
+
+Médicaments récents/Changements (7 derniers jours) :
+
+Allergies :
+
+Vu par MD < 72h ? :
+
+Résultats Labo pertinents :
+
+Données Optionnelles (Selon cas) :
+
+Glycémie : (mmol/L)
+
+Glasgow : (/15)
+
+Signes neuro :
+
+Détresse / Danger immédiat / Risque suicidaire :
 
 INTERVENTIONS & ANALYSE
 
-Interventions faites
+Médicament PRN administré : (Lequel / Effet)
 
-Niveau de soins actuel
+Ordonnance collective (OC) appliquée : (Laquelle)
 
-Décision (Surveillance, Appel MD, Urgence)
+Autres interventions faites :
+
+Niveau de Soins (NDS) Actuel : (A / B / C / D)
+
+DÉCISION INFIRMIÈRE
+
+Conclusion : (Avis médical exigé / Attente visite médicale / Ajustement surveillance PTI / Urgence)
