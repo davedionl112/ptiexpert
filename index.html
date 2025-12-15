@@ -78,14 +78,14 @@
         #view-dashboard {
             background-color: #f8fafc;
             /* L'image est positionnée en bas à gauche.
-               Un dégradé radial ou linéaire part du bas gauche (transparent pour révéler l'image)
-               vers le haut droite (couleur de fond opaque pour cacher l'image et rendre le texte lisible).
+               Un dégradé radial part du bas gauche (transparent pour révéler l'image)
+               vers le reste de la page (couleur de fond opaque pour cacher l'image et rendre le texte lisible).
             */
             background-image: 
-                linear-gradient(to top right, rgba(248, 250, 252, 0.2) 0%, rgba(248, 250, 252, 0.9) 50%, rgba(248, 250, 252, 1) 100%),
-                url('fond-dashboard.jpg'); 
+                radial-gradient(circle at 10% 90%, rgba(248, 250, 252, 0.1) 0%, rgba(248, 250, 252, 0.8) 40%, rgba(248, 250, 252, 1) 70%),
+                url('fond-dashboard.png'); 
             
-            background-size: cover; /* Ou contain selon la taille de ton image, cover est souvent mieux pour remplir */
+            background-size: 50%; /* Ajuste la taille selon tes besoins (ex: 40%, 50%, contain) */
             background-position: bottom left;
             background-repeat: no-repeat;
             background-attachment: fixed; 
