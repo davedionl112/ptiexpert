@@ -77,16 +77,16 @@
         /* IMAGE DE FOND POUR LE DASHBOARD */
         #view-dashboard {
             background-color: #f8fafc;
-            /* L'image est positionnée en bas à gauche.
-               Un dégradé radial part du bas gauche (transparent pour révéler l'image)
-               vers le reste de la page (couleur de fond opaque pour cacher l'image et rendre le texte lisible).
+            /* L'image est positionnée en bas à droite.
+               Un dégradé radial part du bas droite (transparent pour révéler l'image)
+               vers le haut gauche (couleur de fond opaque pour cacher l'image et rendre le texte lisible).
             */
             background-image: 
-                radial-gradient(circle at 10% 90%, rgba(248, 250, 252, 0.1) 0%, rgba(248, 250, 252, 0.8) 40%, rgba(248, 250, 252, 1) 70%),
+                radial-gradient(circle at 90% 90%, rgba(248, 250, 252, 0.1) 0%, rgba(248, 250, 252, 0.8) 40%, rgba(248, 250, 252, 1) 70%),
                 url('fond-dashboard.png'); 
             
             background-size: 50%; /* Ajuste la taille selon tes besoins (ex: 40%, 50%, contain) */
-            background-position: bottom left;
+            background-position: bottom right;
             background-repeat: no-repeat;
             background-attachment: fixed; 
         }
