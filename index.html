@@ -73,6 +73,23 @@
         .pti-mini-table th { text-align: left; background-color: #f1f5f9; padding: 4px; color: #475569; font-weight: 700; border: 1px solid #e2e8f0; }
         .pti-mini-table td { padding: 6px 4px; border: 1px solid #e2e8f0; vertical-align: top; }
         .pti-mini-table tr:nth-child(even) { background-color: #fafafa; }
+
+        /* IMAGE DE FOND POUR LE DASHBOARD */
+        #view-dashboard {
+            background-color: #f8fafc;
+            /* L'image est positionnée en bas à gauche.
+               Un dégradé radial ou linéaire part du bas gauche (transparent pour révéler l'image)
+               vers le haut droite (couleur de fond opaque pour cacher l'image et rendre le texte lisible).
+            */
+            background-image: 
+                linear-gradient(to top right, rgba(248, 250, 252, 0.2) 0%, rgba(248, 250, 252, 0.9) 50%, rgba(248, 250, 252, 1) 100%),
+                url('fond-dashboard.jpg'); 
+            
+            background-size: cover; /* Ou contain selon la taille de ton image, cover est souvent mieux pour remplir */
+            background-position: bottom left;
+            background-repeat: no-repeat;
+            background-attachment: fixed; 
+        }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden bg-slate-50">
@@ -113,7 +130,7 @@
                 </div>
 
                 <!-- Zone A: AI Tools -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div class="bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-slate-200 p-6">
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center">
                         <i class="fa-solid fa-microchip mr-2 text-indigo-400"></i>Outils Intelligents
                     </h3>
