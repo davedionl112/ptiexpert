@@ -77,16 +77,15 @@
         /* IMAGE DE FOND POUR LE DASHBOARD */
         #view-dashboard {
             background-color: #f8fafc;
-            /* L'image est positionnée en bas à droite.
-               Un dégradé radial part du bas droite (transparent pour révéler l'image)
-               vers le haut gauche (couleur de fond opaque pour cacher l'image et rendre le texte lisible).
+            /* L'image est maintenant plein écran (cover).
+               Un dégradé partiel est ajouté pour assurer que le texte reste lisible par-dessus l'image.
             */
             background-image: 
-                radial-gradient(circle at 90% 90%, rgba(248, 250, 252, 0.1) 0%, rgba(248, 250, 252, 0.8) 40%, rgba(248, 250, 252, 1) 70%),
+                linear-gradient(to right, rgba(248, 250, 252, 0.4) 0%, rgba(248, 250, 252, 0.7) 100%),
                 url('fond-dashboard.png'); 
             
-            background-size: 50%; /* Ajuste la taille selon tes besoins (ex: 40%, 50%, contain) */
-            background-position: bottom right;
+            background-size: cover; 
+            background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed; 
         }
@@ -94,25 +93,25 @@
 </head>
 <body class="flex flex-col h-screen overflow-hidden bg-slate-50">
 
-    <!-- Header -->
-    <header class="bg-slate-800 text-white h-14 flex items-center justify-between px-4 shadow-lg z-50 flex-none">
-        <div class="flex items-center gap-3">
-            <button onclick="navigateTo('dashboard')" class="bg-slate-700 hover:bg-slate-600 p-1.5 rounded transition-colors text-teal-400" title="Retour Accueil">
-                <i class="fa-solid fa-house text-lg"></i>
+    <!-- Header - MODIFIÉ: h-20 (plus haut) et bg-slate-700 (plus pâle) -->
+    <header class="bg-slate-700 text-white h-20 flex items-center justify-between px-6 shadow-lg z-50 flex-none">
+        <div class="flex items-center gap-4">
+            <button onclick="navigateTo('dashboard')" class="bg-slate-600 hover:bg-slate-500 p-2 rounded transition-colors text-teal-400" title="Retour Accueil">
+                <i class="fa-solid fa-house text-xl"></i>
             </button>
-            <div class="h-6 w-px bg-slate-600 mx-1"></div>
-            <div class="flex items-center gap-2">
-                <div class="bg-teal-600 p-1 rounded text-xs"><i class="fa-solid fa-user-nurse text-white"></i></div>
+            <div class="h-8 w-px bg-slate-500 mx-1"></div>
+            <div class="flex items-center gap-3">
+                <div class="bg-teal-600 p-1.5 rounded text-sm"><i class="fa-solid fa-user-nurse text-white"></i></div>
                 <div>
-                    <h1 class="text-sm font-bold leading-tight">STATION CLINIQUE <span class="text-teal-400">ASSISTANT SOINS DE LONGUE DURÉE</span></h1>
-                    <p class="text-[9px] text-slate-400">Outil d'aide à la décision & Documentation <span class="text-slate-500 font-bold ml-1">(v7.9 Sync)</span></p>
+                    <h1 class="text-base font-bold leading-tight uppercase tracking-wide">STATION CLINIQUE <span class="text-teal-400">ASSISTANT SOINS DE LONGUE DURÉE</span></h1>
+                    <p class="text-[10px] text-slate-300">Outil d'aide à la décision & Documentation <span class="text-slate-400 font-bold ml-1">(v7.9 Sync)</span></p>
                 </div>
             </div>
         </div>
-        <div class="flex items-center gap-3">
-            <span id="current-tool-label" class="hidden md:inline-block text-xs font-bold text-slate-400 uppercase tracking-wider mr-2">Tableau de bord</span>
-            <button onclick="openSettings()" class="flex items-center gap-2 text-xs bg-slate-700 hover:bg-slate-600 text-yellow-400 hover:text-white px-3 py-2 rounded transition-colors border border-slate-600" title="Paramètres">
-                <i class="fa-solid fa-gear"></i>
+        <div class="flex items-center gap-4">
+            <span id="current-tool-label" class="hidden md:inline-block text-sm font-bold text-slate-300 uppercase tracking-wider mr-2">Tableau de bord</span>
+            <button onclick="openSettings()" class="flex items-center gap-2 text-xs bg-slate-600 hover:bg-slate-500 text-yellow-400 hover:text-white px-4 py-2.5 rounded transition-colors border border-slate-500" title="Paramètres">
+                <i class="fa-solid fa-gear text-sm"></i>
             </button>
         </div>
     </header>
