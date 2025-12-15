@@ -648,6 +648,27 @@
             }
         }
 
+        // Fonction utilitaire pour le tri des rôles
+        function sortDirectivesByRole(directives) {
+            const roleOrder = {
+                "INF": 1,
+                "INF/AUX": 2,
+                "AUX": 3,
+                "AUX/PAB": 4,
+                "PAB": 5
+            };
+            
+            return directives.sort((a, b) => {
+                const roleA = a.role ? a.role.toUpperCase() : "ALL";
+                const roleB = b.role ? b.role.toUpperCase() : "ALL";
+                
+                const scoreA = roleOrder[roleA] || 99; // 99 pour les rôles non listés (ALL, etc.)
+                const scoreB = roleOrder[roleB] || 99;
+                
+                return scoreA - scoreB;
+            });
+        }
+
         function renderLibrary(filter, btn) {
             currentFilter = filter; // Update current filter
             if(btn) { document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('bg-slate-800','text-white'); b.classList.add('bg-white','text-slate-600','border'); }); btn.classList.remove('bg-white','text-slate-600','border'); btn.classList.add('bg-slate-800','text-white'); }
@@ -658,7 +679,10 @@
             const itemsToRender = filter === 'all' ? database : database.filter(i => i.cat === filter);
             
             itemsToRender.forEach(item => {
-                const list = item.directives.map((d,idx) => {
+                // Tri des directives avant l'affichage
+                const sortedDirectives = sortDirectivesByRole([...item.directives]); // Copie pour ne pas muter l'original si nécessaire
+
+                const list = sortedDirectives.map((d,idx) => {
                     // Safe string handling
                     const safeTitle = item.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                     const safeText = d.text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
@@ -936,6 +960,9 @@ Si tu détectes des signes d'instabilité majeure dans les données fournies (ex
             const lines = res.split('\n');
             let found = false;
             
+            // Collecter toutes les directives trouvées d'abord
+            let parsedDirectives = [];
+
             lines.forEach(line => {
                 if(line.includes('---') || line.toLowerCase().includes('role | directive')) return;
 
@@ -946,105 +973,99 @@ Si tu détectes des signes d'instabilité majeure dans les données fournies (ex
                     role = role.toUpperCase();
                     
                     if(role && dir) {
-                        found = true;
-                        const constLabel = text.length > 30 ? text.substring(0,30) + "..." : text;
-                        const fullTitle = "Constat Généré: " + constLabel;
-                        
-                        let roleClass = "role-all"; 
-                        if (role === "INF") roleClass = "role-inf";
-                        else if (role === "AUX") roleClass = "role-aux";
-                        else if (role === "PAB") roleClass = "role-pab";
-                        else if (role === "INF/AUX") roleClass = "role-inf-aux";
-                        else if (role === "AUX/PAB") roleClass = "role-aux-pab";
-
-                        const card = document.createElement('div');
-                        card.className = "gen-directive-card bg-white border border-slate-200 p-3 rounded mb-2 cursor-pointer shadow-sm transition-all flex items-start gap-3 group";
-                        
-                        // Adding data attributes for restoration
-                        card.dataset.title = fullTitle;
-                        card.dataset.role = role;
-                        card.dataset.text = dir;
-                        card.dataset.roleClass = roleClass;
-
-                        // Initial State HTML
-                        card.innerHTML = `<div class="role-badge ${roleClass} mt-1">${role}</div><div class="flex-1 text-sm text-slate-700">${dir}</div><div class="text-teal-500 opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-plus-circle"></i></div>`;
-                        
-                        // Click Handler
-                        card.onclick = () => { 
-                            addDirective(fullTitle, dir, role);
-                            
-                            // Change to Added State
-                            card.classList.add('bg-teal-50', 'border-teal-200');
-                            card.classList.remove('bg-white', 'border-slate-200');
-                            card.innerHTML = `<div class="role-badge ${roleClass} mt-1">${role}</div><div class="flex-1 text-sm text-slate-700 italic line-through opacity-50">${dir}</div><div class="text-red-500 hover:text-red-700 font-bold text-xs"><i class="fa-solid fa-minus-circle"></i></div>`;
-                            
-                            // Remove Handler attached to new button
-                            card.querySelector('.text-red-500').onclick = (e) => {
-                                e.stopPropagation(); // Prevent card click
-                                
-                                // Remove from PTI
-                                if (currentPTI[fullTitle]) {
-                                    const idx = currentPTI[fullTitle].findIndex(d => d.text === dir);
-                                    if (idx > -1) {
-                                        currentPTI[fullTitle].splice(idx, 1);
-                                        if (currentPTI[fullTitle].length === 0) delete currentPTI[fullTitle];
-                                        updateSidebar();
-                                    }
-                                }
-                                
-                                // Revert Card State (Visual)
-                                card.classList.remove('bg-teal-50', 'border-teal-200');
-                                card.classList.add('bg-white', 'border-slate-200');
-                                card.innerHTML = `<div class="role-badge ${roleClass} mt-1">${role}</div><div class="flex-1 text-sm text-slate-700">${dir}</div><div class="text-teal-500 opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-plus-circle"></i></div>`;
-                                
-                                // Re-attach original click by recursively assigning this handler logic (simplified via function ref in future but here manual reset)
-                                // Since we are inside the closure, we can't easily re-assign the exact same closure.
-                                // FIX: We will rely on refreshing the list or simple toggle logic.
-                                // Actually, for the "Clear All" to work, we need a standard way to reset.
-                                // Let's just re-assign the initial onClick logic by extracting it? No.
-                                // Simplest way: The card.onclick property was overwritten. We need to restore it.
-                                // Since we are inside the function that DEFINES the onclick, we can just re-run the setup if we had a named function.
-                                // Let's use the dataset to restore.
-                                card.onclick = () => {
-                                     // This mimics the initial click handler
-                                     addDirective(fullTitle, dir, role);
-                                     // Visual change to added...
-                                     card.classList.add('bg-teal-50', 'border-teal-200');
-                                     card.classList.remove('bg-white', 'border-slate-200');
-                                     card.innerHTML = `<div class="role-badge ${roleClass} mt-1">${role}</div><div class="flex-1 text-sm text-slate-700 italic line-through opacity-50">${dir}</div><div class="text-red-500 hover:text-red-700 font-bold text-xs"><i class="fa-solid fa-minus-circle"></i></div>`;
-                                     // The remove button needs its listener again... this is getting nested.
-                                     // For now, this one-level restoration is enough for the user interaction flow described.
-                                     // (User clicks add -> User clicks remove -> User clicks add again).
-                                     // To support infinite toggling without named functions, we'd need a different structure.
-                                     // But for "Clear All" restoration, we will use the dataset attributes.
-                                     
-                                     // Re-bind the remove click for the re-added item
-                                     card.querySelector('.text-red-500').onclick = (ev) => {
-                                         ev.stopPropagation();
-                                         if (currentPTI[fullTitle]) {
-                                            const idx = currentPTI[fullTitle].findIndex(d => d.text === dir);
-                                            if (idx > -1) {
-                                                currentPTI[fullTitle].splice(idx, 1);
-                                                if (currentPTI[fullTitle].length === 0) delete currentPTI[fullTitle];
-                                                updateSidebar();
-                                            }
-                                        }
-                                        // Reset visual again...
-                                        card.classList.remove('bg-teal-50', 'border-teal-200');
-                                        card.classList.add('bg-white', 'border-slate-200');
-                                        card.innerHTML = `<div class="role-badge ${roleClass} mt-1">${role}</div><div class="flex-1 text-sm text-slate-700">${dir}</div><div class="text-teal-500 opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-plus-circle"></i></div>`;
-                                        // And we are back to the state where 'card.onclick' is still this function. So it works!
-                                     };
-                                     card.onclick = null;
-                                };
-                            };
-                            
-                            card.onclick = null; // Disable main card click
-                        };
-                        output.appendChild(card);
+                        parsedDirectives.push({ role: role, text: dir });
                     }
                 }
             });
+
+            // Trier les directives collectées
+            const sortedGeneratedDirectives = sortDirectivesByRole(parsedDirectives);
+
+            if (sortedGeneratedDirectives.length > 0) {
+                found = true;
+                const constLabel = text.length > 30 ? text.substring(0,30) + "..." : text;
+                const fullTitle = "Constat Généré: " + constLabel;
+
+                sortedGeneratedDirectives.forEach(item => {
+                    const role = item.role;
+                    const dir = item.text;
+                    
+                    let roleClass = "role-all"; 
+                    if (role === "INF") roleClass = "role-inf";
+                    else if (role === "AUX") roleClass = "role-aux";
+                    else if (role === "PAB") roleClass = "role-pab";
+                    else if (role === "INF/AUX") roleClass = "role-inf-aux";
+                    else if (role === "AUX/PAB") roleClass = "role-aux-pab";
+
+                    const card = document.createElement('div');
+                    card.className = "gen-directive-card bg-white border border-slate-200 p-3 rounded mb-2 cursor-pointer shadow-sm transition-all flex items-start gap-3 group";
+                    
+                    // Adding data attributes for restoration
+                    card.dataset.title = fullTitle;
+                    card.dataset.role = role;
+                    card.dataset.text = dir;
+                    card.dataset.roleClass = roleClass;
+
+                    // Initial State HTML
+                    card.innerHTML = `<div class="role-badge ${roleClass} mt-1">${role}</div><div class="flex-1 text-sm text-slate-700">${dir}</div><div class="text-teal-500 opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-plus-circle"></i></div>`;
+                    
+                    // Click Handler
+                    card.onclick = () => { 
+                        addDirective(fullTitle, dir, role);
+                        
+                        // Change to Added State
+                        card.classList.add('bg-teal-50', 'border-teal-200');
+                        card.classList.remove('bg-white', 'border-slate-200');
+                        card.innerHTML = `<div class="role-badge ${roleClass} mt-1">${role}</div><div class="flex-1 text-sm text-slate-700 italic line-through opacity-50">${dir}</div><div class="text-red-500 hover:text-red-700 font-bold text-xs"><i class="fa-solid fa-minus-circle"></i></div>`;
+                        
+                        // Remove Handler attached to new button
+                        card.querySelector('.text-red-500').onclick = (e) => {
+                            e.stopPropagation(); // Prevent card click
+                            
+                            // Remove from PTI
+                            if (currentPTI[fullTitle]) {
+                                const idx = currentPTI[fullTitle].findIndex(d => d.text === dir);
+                                if (idx > -1) {
+                                    currentPTI[fullTitle].splice(idx, 1);
+                                    if (currentPTI[fullTitle].length === 0) delete currentPTI[fullTitle];
+                                    updateSidebar();
+                                }
+                            }
+                            
+                            // Revert Card State (Visual)
+                            card.classList.remove('bg-teal-50', 'border-teal-200');
+                            card.classList.add('bg-white', 'border-slate-200');
+                            card.innerHTML = `<div class="role-badge ${roleClass} mt-1">${role}</div><div class="flex-1 text-sm text-slate-700">${dir}</div><div class="text-teal-500 opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-plus-circle"></i></div>`;
+                            
+                            card.onclick = () => {
+                                    addDirective(fullTitle, dir, role);
+                                    card.classList.add('bg-teal-50', 'border-teal-200');
+                                    card.classList.remove('bg-white', 'border-slate-200');
+                                    card.innerHTML = `<div class="role-badge ${roleClass} mt-1">${role}</div><div class="flex-1 text-sm text-slate-700 italic line-through opacity-50">${dir}</div><div class="text-red-500 hover:text-red-700 font-bold text-xs"><i class="fa-solid fa-minus-circle"></i></div>`;
+                                    
+                                    card.querySelector('.text-red-500').onclick = (ev) => {
+                                        ev.stopPropagation();
+                                        if (currentPTI[fullTitle]) {
+                                        const idx = currentPTI[fullTitle].findIndex(d => d.text === dir);
+                                        if (idx > -1) {
+                                            currentPTI[fullTitle].splice(idx, 1);
+                                            if (currentPTI[fullTitle].length === 0) delete currentPTI[fullTitle];
+                                            updateSidebar();
+                                        }
+                                    }
+                                    card.classList.remove('bg-teal-50', 'border-teal-200');
+                                    card.classList.add('bg-white', 'border-slate-200');
+                                    card.innerHTML = `<div class="role-badge ${roleClass} mt-1">${role}</div><div class="flex-1 text-sm text-slate-700">${dir}</div><div class="text-teal-500 opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-plus-circle"></i></div>`;
+                                    };
+                                    card.onclick = null;
+                            };
+                        };
+                        
+                        card.onclick = null; // Disable main card click
+                    };
+                    output.appendChild(card);
+                });
+            }
             
             if(!found) output.innerHTML = `<div class="p-4 bg-yellow-50 text-slate-700 text-sm border-l-4 border-yellow-400"><strong>Note:</strong> L'IA n'a pas respecté le format strict, voici la réponse brute :<br><br>${marked.parse(res)}</div>`;
         }
